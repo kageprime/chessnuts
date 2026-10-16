@@ -1,0 +1,6 @@
+# Dev-only files kept out of Vercel deployments.
+# The deployed site only needs: index.html, chess/, shared/, api/, icons + manifest.
+tests
+*.patch
+node_modules
+.vercel

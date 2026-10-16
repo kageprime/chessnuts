@@ -7,6 +7,9 @@
     "test": "node tests/engine-test.js && node tests/api-test.js && node tests/p2p-test.js && node tests/smoke-test.js && node tests/commentary-test.js && node tests/commentator-test.js && node tests/startmenu-test.js && node tests/ladder-test.js && node tests/themes-test.js && node tests/layout-test.js",
     "test:engine": "node tests/engine-test.js"
   },
+  "engines": {
+    "node": "22.x"
+  },
   "devDependencies": {
     "playwright": "^1.50.0"
   }
