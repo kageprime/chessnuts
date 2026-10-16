@@ -8,7 +8,7 @@ Standalone retro pixel-art chess game.
 - **Tactical Analytics**: Puzzle Survival mode, Game Review & Accuracy Report Card, Opening Banners, and Eval Gauge.
 - **Unlockable Retro Themes**: Boards (Midnight, Candy, Glacier, Ember) and pieces (Jade, Gold, Neon).
 - **Console Trophies**: 12 declarative achievements with XP awards.
-- **Offline / PWA Ready**: 100% playable directly in browser without server dependencies.
+- **Offline / PWA Ready**: `sw.js` caches the app shell, so the game installs and plays offline; 100% playable directly in a browser with no server dependencies.
 
 ## Quick Start
 Open `chess/index.html` (or `index.html`) in any web browser.
