@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Pixel Chess - Start Menu</title>
+  
+  <!-- Pixel Art Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Silkscreen:wght@400;700&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <style>
+    /* Custom Retro CRT and Pixel Art Utilities */
+    :root {
+      --bg-color: #0d0f18;
+      --panel-bg: rgba(26, 28, 46, 0.92);
+      --accent-gold: #f4b41b;
+      --accent-cyan: #00f0ff;
+      --accent-red: #ff3366;
+      --accent-green: #00ff66;
+      --border-color: #3b3e5b;
+      --text-white: #e0e6ed;
+    }
+
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: var(--bg-color);
+      font-family: 'Press Start 2P', 'Silkscreen', monospace;
+      color: var(--text-white);
+      overflow: hidden;
+      width: 100vw;
+      height: 100vh;
+      image-rendering: pixelated;
+    }
+
+    /* Pixelated borders and retro buttons */
+    .pixel-box {
+      background: var(--panel-bg);
+      border: 4px solid var(--border-color);
+      box-shadow: 
+        0 0 0 4px #0d0f18,
+        0 8px 0 0px rgba(0, 0, 0, 0.6),
+        inset 0 0 15px rgba(0, 240, 255, 0.05);
+      position: relative;
+    }
+
+    .pixel-btn {
+      position: relative;
+      background: #252843;
+      border: 3px solid #4a4e69;
+      color: #e0e6ed;
+      text-transform: uppercase;
+      font-family: 'Press Start 2P', monospace;
+      transition: all 0.08s ease-in-out;
+      box-shadow: 0 4px 0 #121324;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 0.85rem 1rem;
+      min-height: 48px;
+    }
+
+    .pixel-btn:hover, .pixel-btn.focused {
+      background: var(--accent-gold);
+      color: #000000;
+      border-color: #ffffff;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 0 #8b5a00, 0 0 12px rgba(244, 180, 27, 0.4);
+    }
+
+    .pixel-btn:active, .pixel-btn.pressed {
+      transform: translateY(2px);
+      box-shadow: 0 2px 0 #8b5a00;
+    }
+
+    .pixel-btn.focused::before {
+      content: "▶";
+      position: absolute;
+      left: 8px;
+      color: #000;
+      animation: blink 0.8s infinite;
+    }
+
+    .pixel-btn.focused {
+      padding-left: 2rem;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+
+    /* Animated CRT Overlay */
+    .crt-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+      background-size: 100% 4px, 6px 100%;
+      pointer-events: none;
+      z-index: 50;
+      opacity: 0.85;
+      transition: opacity 0.3s ease;
+    }
+
+    .crt-overlay.disabled {
+      opacity: 0;
+    }
+
+    /* Screen Vignette */
+    .vignette {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.8);
+      pointer-events: none;
+      z-index: 40;
+    }
+
+    /* Text Glows and Animations */
+    .title-glow {
+      text-shadow: 
+        3px 3px 0px #8b5a00,
+        -2px -2px 0px #000,
+        0 0 15px rgba(244, 180, 27, 0.6);
+      animation: titlePulse 2.5s infinite ease-in-out;
+    }
+
+    .cyan-glow {
+      text-shadow: 0 0 10px rgba(0, 240, 255, 0.7);
+    }
+
+    @keyframes titlePulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.03); }
+    }
+
+    /* Custom Scrollbar for retro panel views */
+    .retro-scrollbar::-webkit-scrollbar {
+      width: 8px;
+    }
+    .retro-scrollbar::-webkit-scrollbar-track {
+      background: #121324;
+    }
+    .retro-scrollbar::-webkit-scrollbar-thumb {
+      background: var(--accent-gold);
+      border-radius: 0px;
+    }
+
+    /* Start Flash Animation */
+    @keyframes flashSeq {
+      0% { opacity: 1; background-color: #ffffff; }
+      20% { opacity: 0.2; }
+      40% { opacity: 1; background-color: var(--accent-gold); }
+      60% { opacity: 0.3; }
+      100% { opacity: 1; }
+    }
+    .start-flash {
+      animation: flashSeq 0.6s ease-out forwards;
+    }
+
+    /* Toggle Switch Custom Styling */
+    .pixel-toggle {
+      width: 52px;
+      height: 28px;
+      background: #121324;
+      border: 2px solid #4a4e69;
+      position: relative;
+      cursor: pointer;
+    }
+    .pixel-toggle-knob {
+      width: 20px;
+      height: 20px;
+      background: #ff3366;
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      transition: all 0.15s ease;
+    }
+    .pixel-toggle.active .pixel-toggle-knob {
+      left: 26px;
+      background: var(--accent-green);
+    }
+
+    /* Custom Retro Slider */
+    input[type=range] {
+      -webkit-appearance: none;
+      background: transparent;
+      width: 100%;
+    }
+    input[type=range]:focus {
+      outline: none;
+    }
+    input[type=range]::-webkit-slider-runnable-track {
+      width: 100%;
+      height: 12px;
+      background: #121324;
+      border: 2px solid #4a4e69;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      height: 20px;
+      width: 12px;
+      background: var(--accent-gold);
+      -webkit-appearance: none;
+      margin-top: -6px;
+      border: 1px solid #ffffff;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body class="flex items-center justify-center relative">
+
+  <!-- Background Canvas for Live Pixel Graphics -->
+  <canvas id="bgCanvas" class="absolute inset-0 w-full h-full z-0"></canvas>
+
+  <!-- CRT Scanline Effect Overlay -->
+  <div id="crtOverlay" class="crt-overlay"></div>
+  <div class="vignette"></div>
+
+  <!-- Game Container Box -->
+  <main class="relative z-10 w-full max-w-2xl mx-auto px-4 py-3 flex flex-col justify-between h-full max-h-[720px] my-auto">
+    
+    <!-- Top Header / Title Section -->
+    <header class="text-center pt-2 sm:pt-4 mb-2 flex-shrink-0">
+      <div class="inline-block bg-[#121324] border-2 border-[#3b3e5b] px-3 py-1 mb-2 text-[10px] sm:text-xs text-[var(--accent-cyan)] cyan-glow tracking-widest">
+        ★ ARCADE EDITION v2.4 ★
+      </div>
+      <h1 class="text-3xl sm:text-5xl md:text-6xl font-black text-[var(--accent-gold)] tracking-wider title-glow my-1">
+        PIXEL CHESS
+      </h1>
+      <p class="text-[10px] sm:text-xs text-gray-300 tracking-wider">
+        RETRO STRATEGY TACTICS
+      </p>
+    </header>
+
+    <!-- Interactive Views Container -->
+    <section class="flex-grow flex flex-col justify-center my-2 relative overflow-hidden">
+      
+      <!-- ================= MAIN MENU VIEW ================= -->
+      <div id="viewMain" class="menu-view flex flex-col gap-2.5 sm:gap-3 w-full max-w-md mx-auto">
+        <button class="pixel-btn focused" data-index="0" onclick="navigateTo('viewModeSelect')">
+          <span class="mr-3 text-lg">⚔️</span> 1 PLAYER (VS AI)
+        </button>
+        <button class="pixel-btn" data-index="1" onclick="setupTwoPlayerMode()">
+          <span class="mr-3 text-lg">👥</span> 2 PLAYERS (LOCAL)
+        </button>
+        <button class="pixel-btn" data-index="2" onclick="setupPuzzleMode()">
+          <span class="mr-3 text-lg">🧩</span> PUZZLE MODE
+        </button>
+        <button class="pixel-btn" data-index="3" onclick="navigateTo('viewSettings')">
+          <span class="mr-3 text-lg">⚙️</span> SETTINGS
+        </button>
+        <button class="pixel-btn" data-index="4" onclick="navigateTo('viewStats')">
+          <span class="mr-3 text-lg">🏆</span> HIGH SCORES / STATS
+        </button>
+        <button class="pixel-btn" data-index="5" onclick="navigateTo('viewCredits')">
+          <span class="mr-3 text-lg">📜</span> CREDITS
+        </button>
+      </div>
+
+      <!-- ================= MODE SELECT MENU ================= -->
+      <div id="viewModeSelect" class="menu-view hidden pixel-box p-4 sm:p-6 rounded-none w-full max-w-lg mx-auto flex flex-col gap-4 text-xs sm:text-sm">
+        <h2 class="text-base sm:text-lg text-[var(--accent-gold)] text-center border-b-2 border-[#3b3e5b] pb-2">
+          MATCH CONFIGURATION
+        </h2>
+
+        <!-- AI Difficulty Picker -->
+        <div id="diffContainer" class="flex flex-col gap-1.5">
+          <label class="text-gray-300 text-[10px] sm:text-xs">AI DIFFICULTY:</label>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <button class="diff-btn pixel-btn text-[10px] sm:text-xs py-2 px-1 justify-center" onclick="setDifficulty('EASY', this)">EASY</button>
+            <button class="diff-btn pixel-btn focused text-[10px] sm:text-xs py-2 px-1 justify-center" onclick="setDifficulty('MEDIUM', this)">MEDIUM</button>
+            <button class="diff-btn pixel-btn text-[10px] sm:text-xs py-2 px-1 justify-center" onclick="setDifficulty('HARD', this)">HARD</button>
+            <button class="diff-btn pixel-btn text-[10px] sm:text-xs py-2 px-1 justify-center" onclick="setDifficulty('PRO', this)">PRO</button>
+          </div>
+        </div>
+
+        <!-- Timer Options -->
+        <div class="flex flex-col gap-1.5">
+          <label class="text-gray-300 text-[10px] sm:text-xs">TIME CONTROL:</label>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <button class="time-btn pixel-btn text-[10px] sm:text-xs py-2 px-1 justify-center" onclick="setTimeControl('UNTIMED', this)">INFINITE</button>
+            <button class="time-btn pixel-btn focused text-[10px] sm:text-xs py-2 px-1 justify-center" onclick="setTimeControl('3+2', this)">3 + 2</button>
+            <button class="time-btn pixel-btn text-[10px] sm:text-xs py-2 px-1 justify-center" onclick="setTimeControl('5 MIN', this)">5 MIN</button>
+            <button class="time-btn pixel-btn text-[10px] sm:text-xs py-2 px-1 justify-center" onclick="setTimeControl('10 MIN', this)">10 MIN</button>
+          </div>
+        </div>
+
+        <!-- Player Side Picker -->
+        <div class="flex flex-col gap-1.5">
+          <label class="text-gray-300 text-[10px] sm:text-xs">PLAY AS:</label>
+          <div class="grid grid-cols-3 gap-2">
+            <button class="color-btn pixel-btn focused text-[10px] sm:text-xs py-2 px-1 justify-center" onclick="setPlayerColor('WHITE', this)">♔ WHITE</button>
+            <button class="color-btn pixel-btn text-[10px] sm:text-xs py-2 px-1 justify-center" onclick="setPlayerColor('BLACK', this)">♚ BLACK</button>
+            <button class="color-btn pixel-btn text-[10px] sm:text-xs py-2 px-1 justify-center" onclick="setPlayerColor('RANDOM', this)">🎲 RANDOM</button>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex gap-3 mt-2">
+          <button class="pixel-btn text-xs py-3 px-3 flex-1 justify-center" onclick="navigateTo('viewMain')">
+            ◄ BACK
+          </button>
+          <button class="pixel-btn text-xs py-3 px-3 flex-[2] justify-center !bg-[var(--accent-green)] !text-black border-white hover:!bg-white" onclick="triggerStartGame()">
+            START MATCH ▶
+          </button>
+        </div>
+      </div>
+
+      <!-- ================= SETTINGS MENU ================= -->
+      <div id="viewSettings" class="menu-view hidden pixel-box p-4 sm:p-6 rounded-none w-full max-w-lg mx-auto flex flex-col gap-3.5 text-xs sm:text-sm max-h-[420px] overflow-y-auto retro-scrollbar">
+        <h2 class="text-base sm:text-lg text-[var(--accent-gold)] text-center border-b-2 border-[#3b3e5b] pb-2">
+          SETTINGS
+        </h2>
+
+        <!-- SFX Toggle & Volume -->
+        <div class="flex items-center justify-between">
+          <span class="text-gray-200 text-[10px] sm:text-xs">SOUND EFFECTS (SFX)</span>
+          <div id="toggleSfx" class="pixel-toggle active" onclick="toggleSetting('sfx')">
+            <div class="pixel-toggle-knob"></div>
+          </div>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="text-[10px] text-gray-400 min-w-[60px]">SFX VOL</span>
+          <input type="range" id="volSfx" min="0" max="100" value="80" onchange="updateVolume('sfx', this.value)" />
+        </div>
+
+        <!-- CRT Toggle -->
+        <div class="flex items-center justify-between border-t border-[#252843] pt-2">
+          <span class="text-gray-200 text-[10px] sm:text-xs">CRT SCANLINES</span>
+          <div id="toggleCrt" class="pixel-toggle active" onclick="toggleSetting('crt')">
+            <div class="pixel-toggle-knob"></div>
+          </div>
+        </div>
+
+        <!-- Theme Selector -->
+        <div class="flex flex-col gap-1 border-t border-[#252843] pt-2">
+          <label class="text-gray-200 text-[10px] sm:text-xs">BOARD THEME:</label>
+          <div class="grid grid-cols-2 gap-2 mt-1">
+            <button class="theme-btn pixel-btn text-[10px] py-2 justify-center focused" onclick="setBoardTheme('Classic Wood', this)">CLASSIC WOOD</button>
+            <button class="theme-btn pixel-btn text-[10px] py-2 justify-center" onclick="setBoardTheme('Cyber Neon', this)">CYBER NEON</button>
+            <button class="theme-btn pixel-btn text-[10px] py-2 justify-center" onclick="setBoardTheme('GameBoy Green', this)">GAMEBOY</button>
+            <button class="theme-btn pixel-btn text-[10px] py-2 justify-center" onclick="setBoardTheme('Midnight Purple', this)">MIDNIGHT</button>
+          </div>
+        </div>
+
+        <!-- Back Button -->
+        <div class="mt-2">
+          <button class="pixel-btn text-xs py-2.5 px-4 w-full justify-center" onclick="navigateTo('viewMain')">
+            ◄ BACK TO MENU
+          </button>
+        </div>
+      </div>
+
+      <!-- ================= STATS / HIGH SCORES VIEW ================= -->
+      <div id="viewStats" class="menu-view hidden pixel-box p-4 sm:p-6 rounded-none w-full max-w-lg mx-auto flex flex-col gap-3 text-xs">
+        <h2 class="text-base sm:text-lg text-[var(--accent-gold)] text-center border-b-2 border-[#3b3e5b] pb-2">
+          PLAYER STATS
+        </h2>
+
+        <div class="grid grid-cols-2 gap-3 text-center my-2">
+          <div class="bg-[#121324] p-3 border border-[#3b3e5b]">
+            <div class="text-gray-400 text-[9px] mb-1">AI WINS</div>
+            <div id="statAiWins" class="text-lg text-[var(--accent-green)]">14</div>
+          </div>
+          <div class="bg-[#121324] p-3 border border-[#3b3e5b]">
+            <div class="text-gray-400 text-[9px] mb-1">LOCAL MATCHES</div>
+            <div id="statLocalWins" class="text-lg text-[var(--accent-cyan)]">28</div>
+          </div>
+          <div class="bg-[#121324] p-3 border border-[#3b3e5b]">
+            <div class="text-gray-400 text-[9px] mb-1">PUZZLES SOLVED</div>
+            <div id="statPuzzles" class="text-lg text-[var(--accent-gold)]">42</div>
+          </div>
+          <div class="bg-[#121324] p-3 border border-[#3b3e5b]">
+            <div class="text-gray-400 text-[9px] mb-1">ELO RATING</div>
+            <div id="statElo" class="text-lg text-[var(--accent-red)]">1450</div>
+          </div>
+        </div>
+
+        <button class="pixel-btn text-xs py-2.5 px-4 w-full justify-center mt-2" onclick="navigateTo('viewMain')">
+          ◄ BACK TO MENU
+        </button>
+      </div>
+
+      <!-- ================= CREDITS VIEW ================= -->
+      <div id="viewCredits" class="menu-view hidden pixel-box p-4 sm:p-6 rounded-none w-full max-w-lg mx-auto flex flex-col gap-3 text-center text-xs">
+        <h2 class="text-base sm:text-lg text-[var(--accent-gold)] border-b-2 border-[#3b3e5b] pb-2">
+          CREDITS
+        </h2>
+
+        <div class="my-2 space-y-3 text-gray-300 text-[10px] sm:text-xs leading-relaxed">
+          <p><span class="text-[var(--accent-cyan)]">GAME CONCEPT & DESIGN</span><br/>Pixel Chess Studios</p>
+          <p><span class="text-[var(--accent-gold)]">PIXEL ART ENGINE</span><br/>HTML5 Canvas Synth Engine</p>
+          <p><span class="text-[var(--accent-green)]">AUDIO SYNTHESIS</span><br/>Web Audio API 8-Bit Generator</p>
+          <p class="text-[9px] text-gray-400">THANK YOU FOR PLAYING!</p>
+        </div>
+
+        <button class="pixel-btn text-xs py-2.5 px-4 w-full justify-center mt-2" onclick="navigateTo('viewMain')">
+          ◄ BACK TO MENU
+        </button>
+      </div>
+
+    </section>
+
+    <!-- Bottom Controls & Key Binding Guide Bar -->
+    <footer class="flex flex-col items-center justify-center flex-shrink-0 pt-2 border-t border-[#252843]">
+      <!-- Input Map Indicator -->
+      <div id="inputGuide" class="text-[9px] sm:text-[10px] text-gray-400 text-center tracking-wider mb-2">
+        <span class="hidden sm:inline">⌨️ [WASD / ARROWS] NAVIGATE • [ENTER / SPACE] SELECT</span>
+        <span class="inline sm:hidden">📱 TAP OPTIONS TO SELECT</span>
+      </div>
+      
+      <div class="text-[8px] sm:text-[9px] text-gray-500 text-center">
+        PIXEL CHESS ENGINE © 2026 • ALL RIGHTS RESERVED
+      </div>
+    </footer>
+
+  </main>
+
+  <!-- Start Overlay Message Modal -->
+  <div id="startOverlay" class="fixed inset-0 bg-black/90 z-50 flex flex-col items-center justify-center hidden">
+    <div class="text-2xl sm:text-4xl text-[var(--accent-gold)] title-glow mb-4 text-center px-4">
+      READY PLAYER 1!
+    </div>
+    <div class="text-sm sm:text-base text-white cyan-glow animate-pulse">
+      LOADING MATCH...
+    </div>
+  </div>
+
+  <!-- JavaScript App & Canvas Logic -->
+  <script>
+    // Global State Container
+    const state = {
+      activeView: 'viewMain',
+      focusedIndex: 0,
+      sfxEnabled: true,
+      crtEnabled: true,
+      sfxVolume: 0.8,
+      difficulty: 'MEDIUM',
+      timeControl: '3+2',
+      playerColor: 'WHITE',
+      boardTheme: 'Classic Wood'
+    };
+
+    // ==========================================
+    // 1. WEB AUDIO API SYNTHESIZER (8-BIT SFX)
+    // ==========================================
+    let audioCtx = null;
+
+    function initAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+    }
+
+    function playSound(type) {
+      if (!state.sfxEnabled) return;
+      try {
+        initAudio();
+        if (audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        const now = audioCtx.currentTime;
+        const vol = state.sfxVolume;
+
+        if (type === 'hover') {
+          osc.type = 'square';
+          osc.frequency.setValueAtTime(320, now);
+          osc.frequency.exponentialRampToValueAtTime(440, now + 0.04);
+          gain.gain.setValueAtTime(0.08 * vol, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+          osc.start(now);
+          osc.stop(now + 0.04);
+        } else if (type === 'select') {
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(523.25, now); // C5
+          osc.frequency.setValueAtTime(659.25, now + 0.06); // E5
+          gain.gain.setValueAtTime(0.2 * vol, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+          osc.start(now);
+          osc.stop(now + 0.15);
+        } else if (type === 'start') {
+          // Arpeggio Fanfare
+          const notes = [440, 554.37, 659.25, 880];
+          notes.forEach((freq, idx) => {
+            const noteOsc = audioCtx.createOscillator();
+            const noteGain = audioCtx.createGain();
+            noteOsc.type = 'square';
+            noteOsc.frequency.setValueAtTime(freq, now + idx * 0.08);
+            noteGain.connect(audioCtx.destination);
+            noteOsc.connect(noteGain);
+
+            noteGain.gain.setValueAtTime(0.18 * vol, now + idx * 0.08);
+            noteGain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.12);
+
+            noteOsc.start(now + idx * 0.08);
+            noteOsc.stop(now + idx * 0.08 + 0.12);
+          });
+        } else if (type === 'toggle') {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(600, now);
+          osc.frequency.setValueAtTime(300, now + 0.05);
+          gain.gain.setValueAtTime(0.15 * vol, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+          osc.start(now);
+          osc.stop(now + 0.08);
+        }
+      } catch (e) {
+        // Audio fallback if muted by browser policy
+      }
+    }
+
+    // ==========================================
+    // 2. LIVE CANVA BACKGROUND ENGINE
+    // ==========================================
+    const canvas = document.getElementById('bgCanvas');
+    const ctx = canvas.getContext('2d');
+
+    let pieces = [];
+    let particles = [];
+    let gridOffset = 0;
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    // Custom Pixel Chess Piece Drawing Data (8x8 Grid Representation)
+    const PIECE_PATTERNS = {
+      Pawn: [
+        "  ████  ",
+        "  ████  ",
+        "   ██   ",
+        "  ████  ",
+        "  ████  ",
+        " ██████ ",
+        "████████"
+      ],
+      Knight: [
+        "  ████  ",
+        " ██████ ",
+        "████ ██ ",
+        "██████  ",
+        "  ████  ",
+        " ██████ ",
+        "████████"
+      ],
+      Rook: [
+        "█ ██ ███",
+        "████████",
+        "  ████  ",
+        "  ████  ",
+        "  ████  ",
+        " ██████ ",
+        "████████"
+      ],
+      Bishop: [
+        "   ██   ",
+        "  ████  ",
+        "  █ ██  ",
+        "  ████  ",
+        "   ██   ",
+        "  ████  ",
+        "████████"
+      ],
+      Queen: [
+        "█ █ █ █ ",
+        "████████",
+        " ██████ ",
+        "  ████  ",
+        "  ████  ",
+        " ██████ ",
+        "████████"
+      ],
+      King: [
+        "   ██   ",
+        " ██████ ",
+        "  ████  ",
+        " ██████ ",
+        "  ████  ",
+        " ██████ ",
+        "████████"
+      ]
+    };
+
+    // Piece Class
+    class PixelPiece {
+      constructor() {
+        this.reset();
+      }
+
+      reset() {
+        this.x = Math.random() * canvas.width;
+        this.y = canvas.height + 60 + Math.random() * 100;
+        this.speed = 0.3 + Math.random() * 0.7;
+        this.scale = Math.floor(2 + Math.random() * 3); // Pixel scale factor
+        this.type = Object.keys(PIECE_PATTERNS)[Math.floor(Math.random() * 6)];
+        this.color = Math.random() > 0.5 ? '#f4b41b' : '#00f0ff';
+        this.opacity = 0.15 + Math.random() * 0.25;
+        this.rotation = (Math.random() - 0.5) * 0.02;
+        this.angle = 0;
+      }
+
+      update() {
+        this.y -= this.speed;
+        this.angle += this.rotation;
+        if (this.y < -80) {
+          this.reset();
+        }
+      }
+
+      draw() {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.angle);
+        ctx.globalAlpha = this.opacity;
+        ctx.fillStyle = this.color;
+
+        const pattern = PIECE_PATTERNS[this.type];
+        const pSize = this.scale;
+
+        for (let r = 0; r < pattern.length; r++) {
+          for (let c = 0; c < pattern[r].length; c++) {
+            if (pattern[r][c] === '█') {
+              ctx.fillRect(
+                (c - 4) * pSize,
+                (r - 4) * pSize,
+                pSize,
+                pSize
+              );
+            }
+          }
+        }
+        ctx.restore();
+      }
+    }
+
+    // Floating Sparkle Particles
+    class SparkleParticle {
+      constructor() {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        this.size = Math.floor(1 + Math.random() * 3) * 2;
+        this.speedY = -0.2 - Math.random() * 0.4;
+        this.alpha = Math.random();
+        this.fade = 0.005 + Math.random() * 0.01;
+      }
+
+      update() {
+        this.y += this.speedY;
+        this.alpha += this.fade;
+        if (this.alpha <= 0 || this.alpha >= 1) this.fade = -this.fade;
+        if (this.y < 0) {
+          this.y = canvas.height;
+          this.x = Math.random() * canvas.width;
+        }
+      }
+
+      draw() {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, this.alpha * 0.4);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(this.x, this.y, this.size, this.size);
+        ctx.restore();
+      }
+    }
+
+    // Spawn entities
+    for (let i = 0; i < 14; i++) pieces.push(new PixelPiece());
+    for (let i = 0; i < 35; i++) particles.push(new SparkleParticle());
+
+    // Main Canvas Render Loop
+    function animateCanvas() {
+      // Clear with dark space color
+      ctx.fillStyle = '#0d0f18';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Draw Perspective Floating Checkered Board Grid
+      gridOffset = (gridOffset + 0.3) % 40;
+      ctx.strokeStyle = 'rgba(59, 62, 91, 0.25)';
+      ctx.lineWidth = 1;
+
+      const tileSize = 40;
+      for (let x = 0; x < canvas.width; x += tileSize) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, canvas.height);
+        ctx.stroke();
+      }
+      for (let y = gridOffset - tileSize; y < canvas.height; y += tileSize) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(canvas.width, y);
+        ctx.stroke();
+      }
+
+      // Render Floating Particles
+      particles.forEach(p => {
+        p.update();
+        p.draw();
+      });
+
+      // Render Pixel Chess Pieces
+      pieces.forEach(piece => {
+        piece.update();
+        piece.draw();
+      });
+
+      requestAnimationFrame(animateCanvas);
+    }
+
+    animateCanvas();
+
+    // ==========================================
+    // 3. UI NAVIGATION & CONTROL SYSTEM
+    // ==========================================
+    function navigateTo(viewId) {
+      playSound('select');
+      document.querySelectorAll('.menu-view').forEach(v => v.classList.add('hidden'));
+      const target = document.getElementById(viewId);
+      if (target) {
+        target.classList.remove('hidden');
+        state.activeView = viewId;
+        
+        // Reset index for active menu buttons
+        const btnList = target.querySelectorAll('.pixel-btn');
+        if (btnList.length > 0) {
+          updateFocusedButton(btnList, 0);
+        }
+      }
+    }
+
+    function getCurrentButtons() {
+      const activeView = document.getElementById(state.activeView);
+      if (!activeView) return [];
+      return Array.from(activeView.querySelectorAll('.pixel-btn'));
+    }
+
+    function updateFocusedButton(buttons, newIndex) {
+      if (!buttons || buttons.length === 0) return;
+      buttons.forEach(b => b.classList.remove('focused'));
+      
+      state.focusedIndex = (newIndex + buttons.length) % buttons.length;
+      buttons[state.focusedIndex].classList.add('focused');
+      playSound('hover');
+    }
+
+    // Keyboard Input Listener
+    window.addEventListener('keydown', (e) => {
+      const buttons = getCurrentButtons();
+      if (buttons.length === 0) return;
+
+      if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') {
+        e.preventDefault();
+        updateFocusedButton(buttons, state.focusedIndex + 1);
+      } else if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') {
+        e.preventDefault();
+        updateFocusedButton(buttons, state.focusedIndex - 1);
+      } else if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        if (buttons[state.focusedIndex]) {
+          buttons[state.focusedIndex].click();
+        }
+      } else if (e.key === 'Escape') {
+        if (state.activeView !== 'viewMain') {
+          navigateTo('viewMain');
+        }
+      }
+    });
+
+    // Touch and Hover Sync for Mobile & Mouse
+    document.addEventListener('mouseover', (e) => {
+      const btn = e.target.closest('.pixel-btn');
+      if (btn) {
+        const buttons = getCurrentButtons();
+        const idx = buttons.indexOf(btn);
+        if (idx !== -1 && idx !== state.focusedIndex) {
+          updateFocusedButton(buttons, idx);
+        }
+      }
+    });
+
+    // ==========================================
+    // 4. SETTINGS & MODES LOGIC
+    // ==========================================
+    function setDifficulty(diff, el) {
+      playSound('select');
+      state.difficulty = diff;
+      document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('focused'));
+      el.classList.add('focused');
+    }
+
+    function setTimeControl(tc, el) {
+      playSound('select');
+      state.timeControl = tc;
+      document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('focused'));
+      el.classList.add('focused');
+    }
+
+    function setPlayerColor(color, el) {
+      playSound('select');
+      state.playerColor = color;
+      document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('focused'));
+      el.classList.add('focused');
+    }
+
+    function toggleSetting(setting) {
+      playSound('toggle');
+      if (setting === 'sfx') {
+        state.sfxEnabled = !state.sfxEnabled;
+        const toggle = document.getElementById('toggleSfx');
+        toggle.classList.toggle('active', state.sfxEnabled);
+      } else if (setting === 'crt') {
+        state.crtEnabled = !state.crtEnabled;
+        const toggle = document.getElementById('toggleCrt');
+        const crtOverlay = document.getElementById('crtOverlay');
+        toggle.classList.toggle('active', state.crtEnabled);
+        crtOverlay.classList.toggle('disabled', !state.crtEnabled);
+      }
+    }
+
+    function updateVolume(type, val) {
+      if (type === 'sfx') {
+        state.sfxVolume = val / 100;
+        playSound('hover');
+      }
+    }
+
+    function setBoardTheme(themeName, el) {
+      playSound('select');
+      state.boardTheme = themeName;
+      document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('focused'));
+      el.classList.add('focused');
+    }
+
+    function setupTwoPlayerMode() {
+      playSound('select');
+      triggerStartGame("2 PLAYERS READY!");
+    }
+
+    function setupPuzzleMode() {
+      playSound('select');
+      triggerStartGame("PUZZLE MODE - LEVEL 1");
+    }
+
+    function triggerStartGame(customMsg) {
+      playSound('start');
+      const overlay = document.getElementById('startOverlay');
+      if (customMsg) {
+        overlay.querySelector('div:first-child').innerText = customMsg;
+      } else {
+        overlay.querySelector('div:first-child').innerText = `READY PLAYER 1! (${state.difficulty})`;
+      }
+
+      overlay.classList.remove('hidden');
+      document.body.classList.add('start-flash');
+
+      setTimeout(() => {
+        overlay.classList.add('hidden');
+        document.body.classList.remove('start-flash');
+        navigateTo('viewMain');
+      }, 2200);
+    }
+  </script>
+</body>
+</html>
