@@ -127,6 +127,24 @@ const res = () => { const r = {}; r.status = (c) => (r.code = c, r); r.json = (o
   r = res();
   await sig({ method: 'GET', query: { room: '!!' }, headers: {} }, r);
   eq('signal GET bad room', r.code, 400);
+  // ---- KV env aliases (Upstash-native names) ----
+  const tracked = [];
+  global.fetch = async (url) => { tracked.push(String(url)); return { ok: true, json: async () => ({ result: [] }) }; };
+  delete process.env.KV_REST_API_URL; delete process.env.KV_REST_API_TOKEN;
+  process.env.UPSTASH_REDIS_REST_URL = 'https://alias.upstash.io';
+  process.env.UPSTASH_REDIS_REST_TOKEN = 'alias-token';
+  r = res();
+  await sig({ method: 'GET', query: { room: 'AB12', since: '0' }, headers: {} }, r);
+  eq('signal uses Upstash alias env', [r.code, r.body.ok, tracked[0].startsWith('https://alias.upstash.io/')], [200, true, true]);
+  // ---- in-memory fallback when no env at all ----
+  global.fetch = async () => { throw new Error('network disabled'); };
+  delete process.env.UPSTASH_REDIS_REST_URL; delete process.env.UPSTASH_REDIS_REST_TOKEN;
+  r = res();
+  await sig({ method: 'POST', body: sm('ZZ99', 'ice', 'g', { c: 1 }), headers: {} }, r);
+  eq('signal memory fallback without env', [r.code, r.body.ok], [200, true]);
+  r = res();
+  await sig({ method: 'GET', query: { room: 'ZZ99', since: '0' }, headers: {} }, r);
+  eq('signal memory fallback replays', [r.code, r.body.ok, r.body.msgs.length], [200, true, 1]);
   console.log(fail ? `\n${fail} FAILED` : '\nall passed');
   process.exit(fail ? 1 : 0);
 })();

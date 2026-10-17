@@ -275,7 +275,7 @@ button:disabled{opacity:.35;pointer-events:none}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 @media (max-height:520px){#ol{flex-direction:row}.oc{flex-direction:column;width:150px;margin:6px 8px;text-align:center}.oc canvas{width:40px;height:40px}.ot{align-items:center}#s-opp h2{margin:0 0 4px}}
 /* wide screens: board on the left, info panel on the right */
-#app.on.wd{top:50%;bottom:auto;transform:translateY(-50%);height:var(--bh,640px);padding:0 28px;display:grid;grid-template-columns:auto var(--pw,460px);grid-template-rows:auto auto auto minmax(0,1fr) auto;column-gap:48px;row-gap:20px;justify-content:center;align-items:stretch;justify-items:stretch}
+#app.on.wd{top:50%;bottom:auto;transform:translateY(-50%);height:var(--bh,640px);padding:0 var(--padh,28px);display:grid;grid-template-columns:auto var(--pw,460px);grid-template-rows:auto auto auto minmax(0,1fr) auto;column-gap:var(--cg,48px);row-gap:var(--rg,20px);justify-content:center;align-items:stretch;justify-items:stretch}
 .wd #bw{grid-column:1;grid-row:1/6;margin:0;align-self:center}
 .wd .top{grid-column:2;grid-row:1;width:auto;margin:0;gap:12px}
 .wd #pb{grid-column:2;grid-row:2}.wd #bub{grid-column:2;grid-row:3}.wd #rb{grid-column:2;grid-row:4}.wd #pw{grid-column:2;grid-row:5}
@@ -441,7 +441,7 @@ button:disabled{opacity:.35;pointer-events:none}
  </div>
 </div>
 <div class="scr" id="s-opp"><h2>CHOOSE OPPONENT</h2><p id="osm"></p><div id="ol"></div><div class="row"><button class="sm" id="ex">EXHIBITION: OFF</button><button class="sm" id="bz">BLITZ: OFF</button><button class="sm" id="ob">BACK</button></div></div>
-<div class="scr" id="s-net"><div class="px card"><h2>ONLINE</h2><p id="netmsg">HOST OR JOIN A FRIEND. FREE, PEER TO PEER.</p><div class="row"><input id="netcode" maxlength="4" placeholder="CODE" aria-label="Room code" autocomplete="off"></div><div class="row"><button class="sm" id="neth">HOST</button><button class="sm" id="netj">JOIN</button><button class="sm" id="bz2">BLITZ: OFF</button></div><div class="row"><button class="sm" id="netb">BACK</button></div></div></div>
+<div class="scr" id="s-net"><div class="px card"><h2>ONLINE</h2><p id="netmsg">QUICK MATCH, OR HOST AND SHARE A CODE WITH A FRIEND. FREE, PEER TO PEER.</p><div class="row"><button class="sm" id="netq">QUICK MATCH</button></div><div class="row"><input id="netcode" maxlength="4" placeholder="CODE" aria-label="Room code" autocomplete="off"></div><div class="row"><button class="sm" id="neth">HOST</button><button class="sm" id="netj">JOIN</button><button class="sm" id="bz2">BLITZ: OFF</button></div><div class="row"><button class="sm" id="netb">BACK</button></div></div></div>
 <div class="scr" id="s-themes"><div class="pane"><h2>THEMES</h2><p class="lab">BOARD</p><div class="tg" id="tb"></div><p class="lab">PIECES</p><div class="tg" id="tp"></div><p class="lab">FINISHERS</p><div class="tg" id="tf"></div><button class="sm" id="thb">BACK</button></div></div>
 <div class="scr" id="s-prof"><div class="pane"><h2>PROFILE</h2><div class="row tabs" id="ptabs"></div><div id="pbody"></div><button class="sm" id="pfb">BACK</button></div></div>
 <div class="scr dim" id="s-pause"><div class="px card"><h2>PAUSED</h2>
@@ -1061,7 +1061,12 @@ if(pfTab==4)$('pbody').innerHTML=h}
 /*NETEND*/
 /*P2P*/
 let p2p=null,remoteApplying=false;
-const ICECFG={iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'},{urls:'stun:stun2.l.google.com:19302'}]};
+let ICECFG={iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'},{urls:'stun:stun2.l.google.com:19302'}]};
+let iceReady=false;
+/* TURN relay credentials when the server is configured for them; STUN-only otherwise. */
+async function prepIce(){if(iceReady||location.protocol.indexOf('http')!=0)return;iceReady=true;
+try{const r=await fetch('/api/turn');const j=await r.json();
+if(j&&j.ok&&Array.isArray(j.iceServers)&&j.iceServers.length)ICECFG={iceServers:j.iceServers}}catch(e){}}
 const mkRoom=()=>{const A='ABCDEFGHJKMNPQRSTUVWXYZ23456789';let s='';for(let i=0;i<4;i++)s+=A[Math.random()*A.length|0];return s};
 const getLocalMsgs=r=>{try{return JSON.parse(localStorage.getItem('pc:sig:'+r)||'[]')}catch(_){return[]}};
 const putLocalMsg=(r,m)=>{try{const a=getLocalMsgs(r);a.push(typeof m==='string'?m:JSON.stringify(m));localStorage.setItem('pc:sig:'+r,JSON.stringify(a))}catch(_){}};
@@ -1085,7 +1090,7 @@ if(loc.length>since)return{ok:true,msgs:loc.slice(since),next:loc.length,local:t
 return rem||{ok:true,msgs:[],next:since};
 }
 function netSend(o){try{if(p2p&&p2p.dc&&p2p.dc.readyState=='open')p2p.dc.send(JSON.stringify(o))}catch(e){}}
-function netLeave(){try{if(p2p){if(p2p.pollT)clearInterval(p2p.pollT);if(p2p.lostT)clearTimeout(p2p.lostT);
+function netLeave(){stopQuick();try{if(p2p){if(p2p.pollT)clearInterval(p2p.pollT);if(p2p.lostT)clearTimeout(p2p.lostT);
 try{p2p.dc&&p2p.dc.close()}catch(e){}try{p2p.pc&&p2p.pc.close()}catch(e){}
 if(p2p.room&&p2p.side=='w'){try{localStorage.removeItem('pc:sig:'+p2p.room)}catch(e){}}}}catch(e){}p2p=null}
 function showNet(msg){scr('s-title',0);scr('s-net',1);blitzLabel();if(msg)$('netmsg').textContent=msg}
@@ -1113,14 +1118,41 @@ for(const m of r.msgs){let g;try{g=JSON.parse(m)}catch(e){continue}
 if(g.t=='answer'&&g.from=='g'&&!p2p.answered){p2p.answered=true;
 try{await p2p.pc.setRemoteDescription(g.d);await drainIce()}catch(e){}}
 else if(g.t=='ice'&&g.from=='g'){p2p.iceQ.push(g.d);if(p2p.answered)await drainIce()}}}
-async function netHost(){netLeave();p2p={side:'w',room:mkRoom(),connected:false,cursor:0,iceQ:[],started:false};
+async function netHost(room){netLeave();await prepIce();p2p={side:'w',room:room||mkRoom(),connected:false,cursor:0,iceQ:[],started:false};
 try{localStorage.removeItem('pc:sig:'+p2p.room)}catch(e){}
 showNet('CODE '+p2p.room+' - WAITING FOR FRIEND...');
 try{
 const res=await hostOffer();
 if(res&&res.local&&location.protocol=='file:')netMsg('CODE '+p2p.room+' - WAITING (LOCAL CROSS-TAB)');
 }catch(e){netMsg('FAILED TO START - TRY AGAIN')}}
-async function netJoin(room){netLeave();
+let qmT=null,qmId=0;
+function stopQuick(){qmId++;if(qmT){clearTimeout(qmT);qmT=null}}
+/* Quick match: poll /api/queue until the server pairs us with a nearby-XP opponent,
+   then run the normal host/join flow. Works on the live site and `npm start` server. */
+async function netQuick(){
+if(location.protocol.indexOf('http')!=0){showNet('QUICK MATCH NEEDS THE WEB VERSION - HOST A ROOM FOR CROSS-TAB PLAY');return}
+netLeave();await prepIce();
+const my=++qmId;
+p2p={side:'w',room:null,connected:false,cursor:0,iceQ:[],started:false,qm:true};
+showNet('MATCHING - LOOKING FOR A LIVE OPPONENT...');
+const mode=blitz|0;let n=0;
+const step=async()=>{
+if(!p2p||!p2p.qm||my!=qmId)return;
+let j=null;
+try{const r=await fetch('/api/queue',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pid:prof.pid,name:prof.name||'YOU',xp:prof.xp|0,blitz:mode})});
+if(r.ok)j=await r.json()}catch(e){}
+if(!p2p||!p2p.qm||my!=qmId)return;
+if(!j||!j.ok){stopQuick();p2p=null;netMsg('MATCHMAKING UNAVAILABLE - HOST A ROOM INSTEAD');return}
+if(j.paired){stopQuick();
+const room=j.room;
+if(j.side=='w')netHost(room);
+else{p2p=null;netJoin(room)}
+return}
+netMsg('MATCHING'+(j.q>1?(' - '+((j.q|0)-1)+' AHEAD IN QUEUE'):'')+'...');
+if(++n>=30){stopQuick();p2p=null;netMsg('NO OPPONENTS RIGHT NOW - TRY A ROOM CODE');return}
+qmT=setTimeout(step,1800)};
+step()}
+async function netJoin(room){netLeave();await prepIce();
 room=(room||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,4);
 if(room.length!=4){showNet('ENTER A 4-LETTER CODE');return}
 p2p={side:'b',room,connected:false,cursor:0,iceQ:[],started:false};
@@ -1236,7 +1268,7 @@ wk=new Worker(URL.createObjectURL(new Blob([src],{type:'text/javascript'})));
 wk.onmessage=e=>{if(e.data.id===reqId&&wkCb)wkCb(e.data.m)};
 wk.onerror=()=>{wk=null;if(inGame&&ai&&!over&&turn=='b'&&!an&&!sa&&!paused)aiMove()}}catch(e){wk=null}
 /* ---- commentator runtime: a second worker analyses each move, #bub speaks, the sheet explains ---- */
-let cw=null,cmtReq=0,cmtPly=0,cmtCur=null,cmtLog={},cmtMv={},cmtSnap=null,cmtOpenPly=0,cmtTipActive=false,cmtTipPly=0,cmtTipAlt=0,cmtTipTimer=null;
+let cw=null,cmtReq=0,cmtGid=0,cmtPly=0,cmtCur=null,cmtLog={},cmtMv={},cmtSnap=null,cmtOpenPly=0,cmtTipActive=false,cmtTipPly=0,cmtTipAlt=0,cmtTipTimer=null;
 let cmtSpeaker='opp',cmtUntil=0;
 const cmtOn=()=>$('s-cmt').classList.contains('on');
 const cmtAuto=(h,ex)=>!!(ai&&inGame&&!over&&!paused&&h&&ex&&h.t=='w'&&(ex.tag=='BLUNDER'||ex.tag=='BRILLIANT!'));
@@ -1251,7 +1283,7 @@ try{
  +'\nconst cmSc=(b2,col,d)=>{if(AB)return ev(b2)/10*(col=="w"?1:-1);const v=(col=="w"?1:-1)*search(b2,col,d,-1e9,1e9);return AB?ev(b2)/10*(col=="w"?1:-1):v/10};'
  +'onmessage=e=>{const d=e.data,bb=d.rows;bb.cr=d.cr;bb.ep=d.ep;DL=Date.now()+(d.ms||700);AB=false;let ex=null;'
  +'try{ex=cmExplain(bb,d.h,{score:(x,c)=>cmSc(x,c,2),trapScore:(x,c)=>cmSc(x,c,1),traps:d.traps})}catch(err){ex=null}'
- +'postMessage({id:d.id,ply:d.ply,ex:ex})}';
+ +'postMessage({gid:d.gid,id:d.id,ply:d.ply,ex:ex})}';
  cw=new Worker(URL.createObjectURL(new Blob([cwSrc],{type:'text/javascript'})));
  cw.onmessage=e=>cmtGot(e.data);cw.onerror=()=>{cw=null}
 }catch(e){cw=null}
@@ -1260,6 +1292,7 @@ function cmtHead(ex){cmtSay(ex.tag+ex.suf+' - '+ex.head,cmExpr(ex.tag))}
 function showOnBoardTip(ply,altIdx){
  const ex=cmtLog[ply];if(!ex||!ex.alt||!ex.alt.length){clearOnBoardTip();return}
  if(cmtTipTimer){clearTimeout(cmtTipTimer);cmtTipTimer=null}
+ try{clearTimeout(sayT);sayQ=null}catch(e){}
  cmtTipPly=ply;altIdx=altIdx||0;
  cmtTipAlt=((altIdx%ex.alt.length)+ex.alt.length)%ex.alt.length;
  const alt=ex.alt[cmtTipAlt],h=hist[ply-1];
@@ -1275,16 +1308,16 @@ function clearOnBoardTip(){
  if(cmtTipTimer){clearTimeout(cmtTipTimer);cmtTipTimer=null}
  if(cmtTipActive||cmArrows.length){cmtTipActive=false;cmArrows=[];draw()}
 }
-function cmtGot(d){if(!d||!d.ex||!inGame||d.ply>hist.length)return;
+function cmtGot(d){if(!d||!d.ex||!inGame||d.gid!==cmtGid||d.ply>hist.length)return;
  d.ex.worker=1;cmtLog[d.ply]=d.ex;if(d.ply!=cmtPly)return;
- cmtCur=d.ex;cmtHead(d.ex);if(d.ex.eval!=null)updEvalGauge(d.ex.eval/10,d.ex.mate);
+ cmtCur=d.ex;if(!cmtTipActive||cmtMv[d.ply]=='w')cmtHead(d.ex);if(d.ex.eval!=null)updEvalGauge(d.ex.eval/10,d.ex.mate);
  if(cmtOn()&&cmtOpenPly==d.ply&&!$('cmtbox').classList.contains('mini'))cmtRender(d.ply);
  if(ai&&!over&&!paused&&cmtMv[d.ply]=='w'&&(d.ex.tag=='BLUNDER'||d.ex.tag=='MISTAKE'||d.ex.tag=='BRILLIANT!'))showOnBoardTip(d.ply,0)}
 function cmtMove(bb,h){if(!bb)return;const ply=hist.length;cmtPly=ply;cmtMv[ply]=h.t;
  let ex=null;try{ex=cmExplain(bb,h,{traps:0})}catch(e){ex=null}
- if(ex){cmtLog[ply]=ex;cmtCur=ex;cmtHead(ex)}
+ if(ex){cmtLog[ply]=ex;cmtCur=ex;if(!cmtTipActive||h.t=='w')cmtHead(ex)}
  if(cmtAuto(h,ex))showOnBoardTip(ply,0);
- const id=++cmtReq;if(cw)try{cw.postMessage({id:id,ply:ply,rows:bb.map(r=>r.slice()),cr:bb.cr,ep:bb.ep,h:{t:h.t,mv:h.mv,san:h.san,cap:h.cap,pr:h.pr},ms:700,traps:1})}catch(e){}}
+ const id=++cmtReq;if(cw)try{cw.postMessage({gid:cmtGid,id:id,ply:ply,rows:bb.map(r=>r.slice()),cr:bb.cr,ep:bb.ep,h:{t:h.t,mv:h.mv,san:h.san,cap:h.cap,pr:h.pr},ms:700,traps:1})}catch(e){}}
 const cmEsc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 function cmtTitle(ply){const ex=cmtLog[ply],h=hist[ply-1];if(!ex||!h)return;
  const no=Math.ceil(ply/2);
@@ -1463,7 +1496,7 @@ function cmPortrait(ctx, ex) {
   ctx.restore();
   ctx.restore();
 }
-function init(){undosLeft=3;recorded=false;lastOut=null;t0g=Date.now();pausedMs=0;an=null;sa=null;pp=[];drag=null;pend=null;aiPend=null;aiWait=0;reqId++;shake=0;flash=0;chkCol=null;gid++;
+function init(){undosLeft=3;recorded=false;lastOut=null;t0g=Date.now();pausedMs=0;an=null;sa=null;pp=[];drag=null;pend=null;aiPend=null;aiWait=0;reqId++;shake=0;flash=0;chkCol=null;gid++;cmtGid++;cmtReq++;
  cmtLog={};cmtMv={};cmtCur=null;cmtPly=0;cmtSnap=null;clearOnBoardTip();scr('s-cmt',0);
  if(cmt&&gmode!='puzzle'&&gmode!='online')cmtSay('KIBITZ ON THE MIC - I CALL EVERY MOVE');
 b=newBoard();turn='w';sel=null;moves=[];last=null;over=false;flagWin=false;hist=[];hint=null;hop=null;mateAnim=null;if(blitz){CLK.w=CLK.b=blitz*6e4;clkT0=Date.now()}status();draw();BUS.emit('newgame')}
@@ -2215,10 +2248,10 @@ if(a.fl>0)a.fl-=dt;
 draw();if(te>=cfg.dur){an=null;done()}else requestAnimationFrame(step)};
 requestAnimationFrame(step)}
 /* ---- layout: crisp integer pixel scale for the current screen ---- */
-function size(){const vw=innerWidth,vh=innerHeight,dpr=window.devicePixelRatio||1,app=$('app'),wide=vw>=1000&&vw>vh*1.25&&vh>=700,land=!wide&&vw>vh*1.15&&vh<600,root=document.documentElement.style;
+function size(){const vw=innerWidth,vh=innerHeight,dpr=window.devicePixelRatio||1,app=$('app'),wide=(vw>=720&&vw>vh*1.15&&vh>=460)||(vw>=1000&&vh>=600),land=!wide&&vw>vh*1.15&&vh<460,root=document.documentElement.style;
 app.classList.toggle('wd',wide);app.classList.toggle('ls',land);let aw,ah;
 const cs=getComputedStyle(app),padV=(parseFloat(cs.paddingTop)||0)+(parseFloat(cs.paddingBottom)||0),ch=app.clientHeight||vh;
-if(wide){const pw=vw>=1500?560:vw>=1200?470:400;root.setProperty('--pw',pw+'px');root.setProperty('--fs',pw>=560?1.35:pw>=470?1.15:1);aw=vw-56-48-pw-16;ah=vh-48-16}
+if(wide){const pw=vw>=1500?560:vw>=1200?470:vw>=1000?400:vw>=860?320:280,fs=vw>=1500?1.35:vw>=1200?1.15:vw>=1000?1:vw>=860?.95:.88,cg=vw>=1500?48:vw>=1200?40:vw>=1000?32:vw>=860?20:16,rg=vw>=1500?20:vw>=1200?16:vw>=1000?14:vw>=860?10:8,padh=vw>=1500?28:vw>=1200?24:vw>=1000?20:vw>=860?16:12;root.setProperty('--pw',pw+'px');root.setProperty('--fs',fs);root.setProperty('--cg',cg+'px');root.setProperty('--rg',rg+'px');root.setProperty('--padh',padh+'px');aw=vw-padh*2-cg-pw-16;ah=vh-48-16}
 else if(land){aw=vw-332;ah=ch-padV-24}
 else{aw=vw-36;ah=app.classList.contains('on')&&$('pb').offsetHeight?ch-padV-[...app.children].reduce((s,e)=>e.id=='bw'?s:s+e.offsetHeight+16,0)-40:vh-230}
 let k=Math.min(wide?8:6,Math.floor(Math.min(aw,ah)*dpr/W)/dpr);if(k<2)k=Math.max(1,Math.min(aw,ah)/W);
@@ -2733,9 +2766,9 @@ function bubText(t,idle){clearInterval(typT);clearTimeout(bubT);const e=$('bt');
 if(idle){e.textContent=t;return}
 let i=0;e.textContent='';typT=setInterval(()=>{e.textContent=t.slice(0,++i);if(i>=t.length)clearInterval(typT)},22);
 bubT=setTimeout(()=>{if(inGame&&ai)bubText(opp.tag,1)},2600+t.length*45)}
-function say(key,ex,pri,prob){if(!inGame||!ai||!opp.say[key])return;if(cmtTipActive&&pri<6)return;if(prob!=null&&Math.random()>prob)return;
+function say(key,ex,pri,prob){if(!inGame||!ai||!opp.say[key]||cmtTipActive||(key=='start'&&hist.length>0))return;if(prob!=null&&Math.random()>prob)return;
 if(sayQ&&sayQ.pri>=pri)return;sayQ={key,ex,pri};clearTimeout(sayT);sayT=setTimeout(flushSay,0)}
-function flushSay(){const q=sayQ;sayQ=null;if(!q||!inGame||!ai)return;const L=opp.say[q.key];let t;do{t=L[Math.random()*L.length|0]}while(t==lastLine&&L.length>1);
+function flushSay(){const q=sayQ;sayQ=null;if(!q||!inGame||!ai||cmtTipActive||(q.key=='start'&&hist.length>0))return;const L=opp.say[q.key];let t;do{t=L[Math.random()*L.length|0]}while(t==lastLine&&L.length>1);
 lastLine=t;lastSay=Date.now();cmtSpeaker='opp';bubText(t);curEx=q.ex;exUntil=Date.now()+2400;drawPt()}
 setInterval(()=>{if(inGame&&ai&&!document.hidden)drawPt()},140);
 BUS.on('newgame',()=>{if(inGame&&ai)setTimeout(()=>say('start','h',9),350)});
@@ -2826,7 +2859,7 @@ if(m&&document.activeElement!==m){m.focus({preventScroll:true});sfx('sel')}});
 function tmFocus(){if(!$('s-title').classList.contains('on'))return;const v=document.querySelector('#s-title .mv.on');if(!v)return;
 const f=[...v.querySelectorAll('.tm')].filter(x=>!x.hidden&&x.offsetParent!==null)[0];if(f)f.focus({preventScroll:true})}
 $('onl').onclick=()=>showNet();$('netb').onclick=()=>{netLeave();scr('s-net',0);scr('s-title',1);foc('onl')};
-$('neth').onclick=()=>netHost();$('netj').onclick=()=>netJoin($('netcode').value);$('bz2').onclick=blitzCycle;
+$('neth').onclick=()=>netHost();$('netj').onclick=()=>netJoin($('netcode').value);$('netq').onclick=()=>netQuick();$('bz2').onclick=blitzCycle;
 $('ob').onclick=()=>{scr('s-opp',0);scr('s-title',1);foc('shPlay')};$('ex').onclick=()=>{exh=!exh;renderOpp()};$('bz').onclick=blitzCycle;$('nx').onclick=()=>{const o=OPPS[OPP_ORDER.indexOf(opp.id)+1];if(o)startGame(1,o,false)};$('sh').onclick=()=>shareCard();
 Q('.tlvl').forEach(e=>e.onclick=()=>{lvl=(lvl+1)%3;Q('.tlvl').forEach(x=>x.textContent='CPU: '+['EASY','NORMAL','HARD'][lvl])});
 /* settings: shared between the title menu switches and the pause-screen buttons */

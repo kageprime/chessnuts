@@ -46,6 +46,16 @@ const http = require('http');
   const getCursorJson = JSON.parse(getCursorRes.body);
   ok('cursor filters out seen messages', getCursorJson.msgs.length === 0 && getCursorJson.next === 1);
 
+  // quick-match queue pairs two players
+  const q1 = JSON.parse((await req('/api/queue', 'POST', { pid: 'aa11aa11', name: 'A', xp: 100, blitz: 0 })).body);
+  ok('queue first player waits', q1.ok === true && q1.waiting === true, JSON.stringify(q1));
+  const q2 = JSON.parse((await req('/api/queue', 'POST', { pid: 'bb22bb22', name: 'B', xp: 200, blitz: 0 })).body);
+  ok('queue pairs second player', q2.paired === true && q2.side === 'b' && /^[A-Z0-9]{4}$/.test(q2.room || ''), JSON.stringify(q2));
+  const q3 = JSON.parse((await req('/api/queue', 'POST', { pid: 'aa11aa11', name: 'A', xp: 100, blitz: 0 })).body);
+  ok('queue ticket for first player', q3.paired === true && q3.side === 'w' && q3.room === q2.room, JSON.stringify(q3));
+  const qt = JSON.parse((await req('/api/turn')).body);
+  ok('turn reports stun fallback', qt.ok === true && qt.iceServers.length >= 1, JSON.stringify(qt));
+
   srv.close();
   console.log(fails ? fails + ' FAILED' : 'all server tests passed');
   process.exit(fails ? 1 : 0);

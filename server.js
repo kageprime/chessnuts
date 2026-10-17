@@ -56,6 +56,10 @@ setInterval(() => {
 // In-memory scores store for local testing
 const scores = {};
 
+// In-memory quick-match queue (single process, so pairing has no races)
+const queue = {}, pawned = {};
+const mqRoom = () => { const A = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; let s = ''; for (let i = 0; i < 4; i++) s += A[Math.random() * A.length | 0]; return s; };
+
 const srv = http.createServer((req, res) => {
   const u = new URL(req.url, 'http://' + (req.headers.host || 'localhost'));
 
@@ -122,6 +126,58 @@ const srv = http.createServer((req, res) => {
         }
       }
     });
+    return;
+  }
+
+  // API: Quick-match queue (same contract as api/queue.js)
+  if (u.pathname === '/api/queue') {
+    let body = '';
+    req.on('data', c => { body += c; });
+    req.on('end', () => {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      try {
+        const b = JSON.parse(body || '{}');
+        if (!/^[0-9a-f]{8}$/.test(b.pid || '')) { res.end(JSON.stringify({ ok: false, err: 'bad pid' })); return; }
+        const xp = Number.isInteger(b.xp) && b.xp >= 0 ? b.xp : 0;
+        const blitz = [0, 3, 5].includes(b.blitz) ? b.blitz : 0;
+        const name = String(b.name || 'YOU').replace(/[^A-Za-z0-9 _-]/g, '').slice(0, 12) || 'YOU';
+        const tick = pawned[b.pid];
+        if (tick) {
+          delete pawned[b.pid];
+          res.end(JSON.stringify({ ok: true, paired: true, room: tick.room, side: tick.side, opp: tick.opp }));
+          return;
+        }
+        const now = Date.now();
+        let best = null, bestD = 401;
+        for (const p in queue) {
+          const e = queue[p];
+          if (p === b.pid) continue;
+          if (now - e.t > 90000) { delete queue[p]; continue; }
+          if (e.b !== blitz) continue;
+          const d = Math.abs(e.xp - xp);
+          if (d <= 400 && d < bestD) { best = p; bestD = d; }
+        }
+        if (best) {
+          const foe = queue[best];
+          delete queue[best];
+          const room = mqRoom();
+          pawned[best] = { room, side: 'w', opp: { n: name, xp } };
+          res.end(JSON.stringify({ ok: true, paired: true, room, side: 'b', opp: { n: foe.n, xp: foe.xp } }));
+          return;
+        }
+        queue[b.pid] = { n: name, xp, b: blitz, t: now };
+        res.end(JSON.stringify({ ok: true, waiting: true, q: Object.keys(queue).length }));
+      } catch (e) {
+        res.end(JSON.stringify({ ok: false, err: 'invalid json' }));
+      }
+    });
+    return;
+  }
+
+  // API: TURN credentials (LAN play needs no relay; mirror the Vercel STUN fallback)
+  if (u.pathname === '/api/turn') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ ok: true, fallback: true, iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] }));
     return;
   }
 

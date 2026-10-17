@@ -35,22 +35,24 @@ on, so implementation details stay grounded in what exists. Tag meanings: **(S)*
 
 ## Phase 0 — Quick wins & guardrails
 
-- [ ] **(S)** `api/signal.js`: honor `UPSTASH_REDIS_REST_*` / `REDIS_REST_*` aliases like `api/scores.js`
+- [x] **(S)** `api/signal.js`: honor `UPSTASH_REDIS_REST_*` / `REDIS_REST_*` aliases like `api/scores.js`
       does — today a deploy using Upstash-native env names silently falls back to in-memory signaling.
-- [ ] **(S)** GitHub Actions CI: run `npm test` on push/PR (12 suites already pass headless).
-- [ ] **(S)** Decide `package-lock.json` policy and stick to it (commit it, or add to `.gitignore`).
+- [x] **(S)** GitHub Actions CI: run `npm test` on push/PR (12 suites already pass headless).
+- [x] **(S)** Decide `package-lock.json` policy and stick to it (commit it, or add to `.gitignore`).
 - [ ] **(S)** Confirm production Vercel env: Redis URL/token set for the deployment, PW test online play.
 
 ## Phase 1 — Online play: friction to zero
 
 The room-code flow is the weakest link. Everything here reuses the existing signaling pipeline.
 
-- [ ] **(M)** Matchmaking queue — `api/queue.js` with POST (join: pid, xp, blitz) and GET (poll: pid → `{room}`).
+- [x] **(M)** Matchmaking queue — `api/queue.js` with POST (join: pid, xp, blitz) and GET (poll: pid → `{room}`).
       Server pairs waiting players and hands both a room code; clients then run the existing
-      host/join flow. Add a "PLAY ONLINE → QUICK MATCH" button next to "HOST / JOIN".
-- [ ] **(S)** TURN support — `api/turn.js` returns short-lived ICE credentials (Cloudflare Calls TURN or
+      host/join flow. Add a "PLAY ONLINE → QUICK MATCH" button next to "HOST / JOIN". Shipped: one
+      POST endpoint both joins and polls; XP ±400 + blitz-mode pairing; local `server.js` mirrors it.
+- [x] **(S)** TURN support — `api/turn.js` returns short-lived ICE credentials (Cloudflare Calls TURN or
       Metered free tier, decision below). Client fetches once per session and merges into `ICECFG`;
       keep the STUN list as fallback. Fixes the top "can't connect" failure (symmetric NAT / mobile).
+      Shipped with Cloudflare Calls env vars (`CLOUDFLARE_TURN_KEY_ID`/`_TOKEN`); degrades to STUN-only.
 - [ ] **(S)** Emotes + quick chat over the existing data channel — `netSend({t:'emoji',d:'GG'})`, a small
       bar in online games (GG, 👑, 😅, NICE, OOPS). Cheap, big feel improvement.
 - [ ] **(S)** Challenge deep links — `?room=ABCD` pre-fills the join field and auto-joins;
@@ -110,6 +112,8 @@ The room-code flow is the weakest link. Everything here reuses the existing sign
 | 3 | Push notifications | Yes/no + VAPID keys | Biggest retention lever, small privacy ask. |
 | 4 | Ghost replay cap | per board: top 1? top 3? TTL? | Storage trivial either way; policy affects UI. |
 | 5 | `package-lock.json` | Commit · gitignore | Reproducibility vs. repo cleanliness. |
+
+**Decided (Oct 2026):** TURN = Cloudflare Calls (env-driven, graceful STUN fallback); Redis env naming = support all aliases; `package-lock.json` = committed (required by CI `npm ci`).
 
 ## Recommended first sprint
 

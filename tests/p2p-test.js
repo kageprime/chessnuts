@@ -9,10 +9,46 @@ const http = require('http');
   let fails = 0;
   const ok = (n, c, x = '') => { if (!c) fails++; console.log((c ? 'ok   ' : 'FAIL ') + n + (c ? '' : '  ' + x)); };
   const root = path.join(__dirname, '..');
-  const sig = {};
+  const sig = {}, qwait = {}, qpawn = {};
   const mime = { '.html': 'text/html', '.js': 'text/javascript', '.webmanifest': 'application/manifest+json', '.png': 'image/png' };
   const srv = http.createServer((q, s) => {
     const u = new URL(q.url, 'http://x');
+    if (u.pathname === '/api/queue') {
+      let body = '';
+      q.on('data', c => { body += c; });
+      q.on('end', () => {
+        const b = JSON.parse(body || '{}');
+        s.writeHead(200, { 'Content-Type': 'application/json' });
+        const tick = qpawn[b.pid];
+        if (tick) { delete qpawn[b.pid]; s.end(JSON.stringify({ ok: true, paired: true, room: tick.room, side: tick.side, opp: tick.opp })); return; }
+        const now = Date.now();
+        let best = null, bestD = 401;
+        for (const p in qwait) {
+          const e = qwait[p];
+          if (p === b.pid) continue;
+          if (now - e.t > 90000) { delete qwait[p]; continue; }
+          if (e.b !== b.blitz) continue;
+          const d = Math.abs(e.xp - b.xp);
+          if (d <= 400 && d < bestD) { best = p; bestD = d; }
+        }
+        if (best) {
+          const foe = qwait[best]; delete qwait[best];
+          const A = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+          let room = 'QM'; while (room.length < 4) room += A[Math.random() * A.length | 0];
+          qpawn[best] = { room, side: 'w', opp: { n: b.name, xp: b.xp } };
+          s.end(JSON.stringify({ ok: true, paired: true, room, side: 'b', opp: { n: foe.n, xp: foe.xp } }));
+          return;
+        }
+        qwait[b.pid] = { n: b.name, xp: b.xp, b: b.blitz, t: now };
+        s.end(JSON.stringify({ ok: true, waiting: true, q: Object.keys(qwait).length }));
+      });
+      return;
+    }
+    if (u.pathname === '/api/turn') {
+      s.writeHead(200, { 'Content-Type': 'application/json' });
+      s.end(JSON.stringify({ ok: true, fallback: true, iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] }));
+      return;
+    }
     if (u.pathname === '/api/signal') {
       let body = '';
       q.on('data', c => { body += c; });
@@ -70,6 +106,21 @@ const http = require('http');
   await G.evaluate(() => netOn({ t: 'mv', m: [6, 4, 4, 4] }));
   await G.waitForTimeout(300);
   ok('illegal remote move ignored', (await G.evaluate(() => JSON.stringify(b.map(r => r.map(p => p))))) === before);
+  // quick match: two fresh tabs find each other through /api/queue
+  const Q = await br.newPage({ viewport: { width: 390, height: 780 } });
+  const R = await br.newPage({ viewport: { width: 390, height: 780 } });
+  Q.on('pageerror', e => errs.push('Q: ' + e.message));
+  R.on('pageerror', e => errs.push('R: ' + e.message));
+  await Q.goto('http://localhost:8902/chess/index.html');
+  await R.goto('http://localhost:8902/chess/index.html');
+  await Q.click('#onl'); await Q.click('#netq');
+  await R.click('#onl'); await R.click('#netq');
+  await Q.waitForFunction(() => p2p && p2p.connected, null, { timeout: 40000 }).catch(() => { });
+  await R.waitForFunction(() => p2p && p2p.connected, null, { timeout: 40000 }).catch(() => { });
+  const qs = await Promise.all([Q, R].map(p => p.evaluate(() => ({ c: !!(p2p && p2p.connected), side: p2p && p2p.side, g: gmode }))));
+  ok('quick match links both players', qs[0].c && qs[1].c, JSON.stringify(qs));
+  ok('quick match splits sides', qs[0].side !== qs[1].side && qs[0].g === 'online' && qs[1].g === 'online', JSON.stringify(qs));
+  await Q.close(); await R.close();
   console.log(errs.length ? 'PAGE ERRORS:\n' + errs.join('\n') : 'no page errors');
   console.log(fails || errs.length ? fails + ' FAILED' : 'all passed');
   await br.close();
