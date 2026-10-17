@@ -232,7 +232,7 @@ button:disabled{opacity:.35;pointer-events:none}
 #oq{text-align:center!important;font-size:8px!important;opacity:.85;margin:0 0 12px!important}
 #s-opp h2{font-size:14px;margin:0 0 10px;text-shadow:2px 2px 0 var(--accent)}
 /* endless ladders add cards: keep the screen centered when they fit, scrollable when they do not */
-#s-opp{overflow-y:auto}#s-opp h2{margin-top:auto}#s-opp .row{margin-bottom:auto}
+#s-opp{overflow-y:auto;justify-content:flex-start}#s-opp h2{margin-top:auto}#s-opp .row{margin-bottom:auto}
 #ol{display:flex;flex-direction:column;align-items:center}
 .oc{display:flex;align-items:center;gap:12px;width:min(88vw,330px);margin:10px 0;padding:10px;text-align:left}
 .oc canvas{width:48px;height:48px;margin:0;flex:none;box-shadow:0 0 0 2px var(--edge)}
@@ -267,6 +267,12 @@ button:disabled{opacity:.35;pointer-events:none}
 #osm{font-size:7px;line-height:1.6;margin:0 0 4px;opacity:.85;text-align:center}
 .ot em{font-size:7px;font-style:normal;line-height:1.4;color:var(--accent)}
 .oc.lk .ot em{color:var(--fg);opacity:.7}.oc.lk canvas{filter:brightness(.2)}.oc.lk{opacity:.7;cursor:default}.oc.lk.ex{opacity:1}.oc.lk:not(.ex){pointer-events:none}
+/* tower: the floor you are on, tower boss floors, and the sealed door at floor 4 */
+.oc.cur{outline:3px solid var(--accent);outline-offset:2px}
+.oc.cur .ot em{color:#fff;opacity:1}
+.oc.boss .ot u{color:#ffd23f}
+.oc.boss:not(.cur){outline:2px dashed var(--accent);outline-offset:2px}
+.oc.sealed{opacity:.7;cursor:default;pointer-events:none}
 #ou{display:none;align-items:center;justify-content:center;gap:10px;margin:0 0 10px;font-size:8px;line-height:1.6}#ou.on{display:flex}
 #ou canvas{display:none;width:40px;height:40px;flex:none;box-shadow:0 0 0 2px var(--edge)}#ou canvas.on{display:block}
 #out{text-align:left}#nx{display:none}#nx.on{display:block}
@@ -474,7 +480,7 @@ button:disabled{opacity:.35;pointer-events:none}
   <div class="tfoot">PIXEL CHESS © 2026 · BY KAGEPRIME</div>
  </div>
 </div>
-<div class="scr" id="s-opp"><h2>CHOOSE OPPONENT</h2><p id="osm"></p><div id="ol"></div><div class="row"><button class="sm" id="ex">EXHIBITION: OFF</button><button class="sm" id="bz">BLITZ: OFF</button><button class="sm" id="ob">BACK</button></div></div>
+<div class="scr" id="s-opp"><h2>THE TOWER</h2><p id="osm"></p><div id="ol"></div><div class="row"><button class="sm" id="ex">EXHIBITION: OFF</button><button class="sm" id="bz">BLITZ: OFF</button><button class="sm" id="ob">BACK</button></div></div>
 <div class="scr" id="s-net"><div class="px card"><h2>ONLINE</h2><p id="netmsg">QUICK MATCH, OR HOST AND SHARE A CODE WITH A FRIEND. FREE, PEER TO PEER.</p><p id="netelo">RATED...</p><div class="row"><button class="sm" id="netq">QUICK MATCH</button><button class="sm" id="netshare">SHARE</button></div><div class="row"><input id="netcode" maxlength="4" placeholder="CODE" aria-label="Room code" autocomplete="off"></div><div class="row"><button class="sm" id="neth">HOST</button><button class="sm" id="netj">JOIN</button><button class="sm" id="bz2">BLITZ: OFF</button></div><div class="row"><button class="sm" id="netb">BACK</button></div></div></div>
 <div class="scr" id="s-puz"><div class="px card"><h2>PUZZLE ARCHIVE</h2><p id="pastat"></p><div class="pagrid" id="pagrid"></div><p class="vhint">TAP A DAY TO PRACTISE - PAST PUZZLES GIVE NO XP</p><div class="row"><button class="sm" id="patoday">TODAY</button><button class="sm" id="pab">BACK</button></div></div></div>
 <div class="scr" id="s-themes"><div class="pane"><h2>THEMES</h2><p class="lab">BOARD</p><div class="tg" id="tb"></div><p class="lab">PIECES</p><div class="tg" id="tp"></div><p class="lab">FINISHERS</p><div class="tg" id="tf"></div><button class="sm" id="thb">BACK</button></div></div>
@@ -602,7 +608,7 @@ const mkInitials=(name)=>{name=String(name||'').toUpperCase().replace(/[^A-Z0-9 
 let s=name.split(/\s+/).map(w=>w[0]).join('');const w0=s;
 if(s.length<3){const flat=name.replace(/\s+/g,'');for(const ch of flat){if(s.length>=3)break;if(!s.includes(ch))s+=ch}
 while(s.length<3)s+=w0[s.length%w0.length]}return s.slice(0,3)};
-const newProfile=()=>({v:1,hd:1,unlocked:['moss'],rec:{},streak:0,bestStreak:0,games:[],total:{w:0,l:0,d:0},theme:{board:'scene',piece:'classic'},top:{fast:{},mate:{},streaks:[]},vol:.7,puz:{streak:0,best:0,last:'',wins:0,days:{}},trn:{last:'',best:0,wins:0},end:0,xp:0,name:'YOU',cmt:0,crt:1,cb:0,inst:0,pid:mkPid(),elo:1000,initials:'',fin:{eq:{P:'base',N:'base',B:'base',R:'base',Q:'base',K:'base'}}});
+const newProfile=()=>({v:1,hd:1,unlocked:['moss'],rec:{},streak:0,bestStreak:0,games:[],total:{w:0,l:0,d:0},theme:{board:'scene',piece:'classic'},top:{fast:{},mate:{},streaks:[]},vol:.7,puz:{streak:0,best:0,last:'',wins:0,days:{}},trn:{last:'',best:0,wins:0},end:0,hi:0,lv:3,xp:0,name:'YOU',cmt:0,crt:1,cb:0,inst:0,pid:mkPid(),elo:1000,initials:'',fin:{eq:{P:'base',N:'base',B:'base',R:'base',Q:'base',K:'base'}}});
 const nn=(x,d=0)=>Number.isFinite(x)&&x>=0?Math.floor(x):d;
 const LESS={fast:(e,x)=>e.ms<x.ms,mate:(e,x)=>e.moves<x.moves||(e.moves==x.moves&&e.ms<x.ms),streaks:(e,x)=>e.n>x.n};
 /* insert into a top list (best first, max TOPN). Returns the 1-based rank, or 0 if it did not make the list. */
@@ -623,9 +629,19 @@ const finReqText=q=>!q?'':q.beat?'BEAT '+OPPS[OPP_ORDER.indexOf(q.beat)].name:q.
 /* endless ladder: procedural rivals past the campaign */
 const EID=/^e([1-9]\d{0,2})$/,ROMAN=[[1000,'M'],[900,'CM'],[500,'D'],[400,'CD'],[100,'C'],[90,'XC'],[50,'L'],[40,'XL'],[10,'X'],[9,'IX'],[5,'V'],[4,'IV'],[1,'I']];
 function romanNum(n){n=Math.max(1,Math.min(999,n|0));let s='';for(const[v,r]of ROMAN)while(n>=v){s+=r;n-=v}return s}
+/* the tower: floors 1-4 are the campaign, floor f>=5 is tier e(f-4). Every 8th floor is a tower boss
+   (the NOX tier in that slot, maxed out); a loss on the current floor costs one of 3 lives. */
+const FLOORS=4,MAXLV=3,CAMF={moss:1,vex:2,dune:3,nox:4};
+const eloOf=f=>1000+50*Math.max(0,f|0);
+const bossOf=f=>(f|0)>0&&f%8===0;
+const towerOf=f=>Math.floor(((f|0)-1)/8)+1;
+const towerBaseFloor=f=>8*(towerOf(f)-1)+1;
+const towerBaseTier=f=>Math.max(1,8*towerOf(f)-11);
+const oppFloor=id=>CAMF[id]!=null?CAMF[id]:(EID.test(id||'')?FLOORS+ +EID.exec(id)[1]:0);
+const curFloor=p=>{const r=p.rec||{};if(!(r.moss&&r.moss.w))return 1;if(!(r.vex&&r.vex.w))return 2;if(!(r.dune&&r.dune.w))return 3;if(!(r.nox&&r.nox.w))return 4;return FLOORS+Math.max(1,p.end|0)};
 /* tier n recycles a campaign rival: same look and voice, sharper each cycle, bigger thinking budget */
-function endOpp(n){n=Math.max(1,Math.min(999,n|0));const base=OPPS[(n-1)%OPPS.length],cyc=(n-1)/OPPS.length|0;
-return{id:'e'+n,name:base.name+' '+romanNum(n),tag:base.tag,lv:'TIER '+n,lvl:Math.max(1,base.lvl),p:{bl:Math.max(0,(base.p.bl||0)-cyc*.03),a:base.p.a||0,c:base.p.c||0},sty:base.sty,pal:base.pal,say:base.say,endless:true,ms:Math.min(1800,(base.lvl>=2?900:260)+cyc*300)}}
+function endOpp(n){n=Math.max(1,Math.min(999,n|0));const base=OPPS[(n-1)%OPPS.length],cyc=(n-1)/OPPS.length|0,f=n+FLOORS,boss=bossOf(f);
+return{id:'e'+n,name:base.name+' '+romanNum(f),tag:base.tag,lv:'FLOOR '+f,lvl:Math.max(1,base.lvl),p:{bl:boss?0:Math.max(0,(base.p.bl||0)-cyc*.03),a:base.p.a||0,c:base.p.c||0},sty:base.sty,pal:base.pal,say:base.say,endless:true,boss,floor:f,ms:boss?1800:Math.min(1800,(base.lvl>=2?900:260)+cyc*300)}}
 function oppById(id){const k=OPPS.findIndex(x=>x.id===id);if(k>=0)return OPPS[k];const m=EID.exec(id||'');return m?endOpp(+m[1]):null}
 /* next rival after a win: campaign order, then NOX, then the endless tier you are on */
 function nextOpp(id){const k=OPPS.findIndex(x=>x.id===id);if(k>=0)return OPPS[k+1]||((prof.end|0)>0?endOpp(prof.end):null);
@@ -639,9 +655,14 @@ const L=[];for(const e of o)ins(L,e,LESS[kind]);return L}
 function loadProfile(st){const p=newProfile();let o=null;try{const t=st&&st.getItem(PKEY);if(t)o=JSON.parse(t)}catch(e){}
 if(!o||typeof o!='object'||o.v!==1)return p;
 if(Array.isArray(o.unlocked))for(const id of o.unlocked)if((OPP_ORDER.includes(id)||id=='nox')&&!p.unlocked.includes(id))p.unlocked.push(id);
-if(o.rec&&typeof o.rec=='object')for(const id of Object.keys(o.rec)){if(!OPP_ORDER.includes(id)&&!EID.test(id))continue;const r=o.rec[id];if(r&&typeof r=='object')p.rec[id]={w:nn(r.w),l:nn(r.l),d:nn(r.d)}}
+if(o.rec&&typeof o.rec=='object')for(const id of Object.keys(o.rec)){if(id!='nox'&&!OPP_ORDER.includes(id)&&!EID.test(id))continue;const r=o.rec[id];if(r&&typeof r=='object')p.rec[id]={w:nn(r.w),l:nn(r.l),d:nn(r.d)}}
 if(o.total&&typeof o.total=='object')p.total={w:nn(o.total.w),l:nn(o.total.l),d:nn(o.total.d)};
 p.streak=nn(o.streak);p.bestStreak=Math.max(nn(o.bestStreak),p.streak);p.xp=nn(o.xp);p.end=Math.min(999,nn(o.end||0));
+/* tower: hi = best floor ever beaten (derived from records for older saves), lv = lives left */
+{let dh=0;if(p.rec.moss&&p.rec.moss.w>0)dh=1;if(dh==1&&p.rec.vex&&p.rec.vex.w>0)dh=2;if(dh==2&&p.rec.dune&&p.rec.dune.w>0)dh=3;if(dh==3&&p.rec.nox&&p.rec.nox.w>0)dh=4;
+for(const id in p.rec){const m=EID.exec(id);if(m&&p.rec[id].w>0&&FLOORS+ +m[1]>dh)dh=FLOORS+ +m[1]}
+p.hi=Math.max(dh,o.hi!=null?Math.min(9999,nn(o.hi)):0);
+p.lv=Math.min(MAXLV,Math.max(1,nn(o.lv)||MAXLV))}
 /* saves from before the endless ladder: a beaten Dune means the campaign was cleared, so NOX and tier 1 are owed */
 if(p.rec.dune&&p.rec.dune.w>0){if(!p.unlocked.includes('nox'))p.unlocked.push('nox');p.end=Math.max(p.end,1)}
 if(o.puz&&typeof o.puz=='object'){p.puz={streak:nn(o.puz.streak),best:Math.max(nn(o.puz.best),nn(o.puz.streak)),last:typeof o.puz.last=='string'?o.puz.last.slice(0,10):'',wins:nn(o.puz.wins),days:{}};
@@ -680,7 +701,7 @@ const xpTitle=x=>{let t=RANKS[0][1];for(const[m,n]of RANKS)if(x>=m)t=n;return t}
 function recordResult(p,r){const before=themeKeys(p);const finBefore=finKeys(p);const rc=p.rec[r.id]||(p.rec[r.id]={w:0,l:0,d:0});rc[r.res]++;p.total[r.res]++;
 const oldRank=xpTitle(p.xp||0);
 p.xp=(p.xp||0)+(r.res=='w'?100:r.res=='d'?30:10);
-const out={unlocked:null,cleared:false,bonus:null,endless:0,endlessOpen:false,rankUp:null,streakFiled:0,newBest:[],ranks:{time:0,moves:0},themes:[],finishers:[]};
+const out={unlocked:null,cleared:false,bonus:null,endless:0,endlessOpen:false,rankUp:null,streakFiled:0,newBest:[],ranks:{time:0,moves:0},themes:[],finishers:[],lives:0,wipe:null,boss:0,tower:0,ultimate:false};
 if(xpTitle(p.xp)!=oldRank)out.rankUp=xpTitle(p.xp);
 if(r.res=='w'){p.streak++;if(p.streak>p.bestStreak)p.bestStreak=p.streak;
 const i=OPP_ORDER.indexOf(r.id),nx=i>=0?OPP_ORDER[i+1]:null;
@@ -693,8 +714,15 @@ if(em){const n=+em[1];if(n==(p.end|0)){p.end=n+1;out.endless=n}}
 else{const mv=Math.max(1,Math.ceil(r.plies/2)),T=p.top;
 if(r.mate)out.ranks.moves=ins(T.mate[r.id]||(T.mate[r.id]=[]),{moves:mv,ms:r.ms,undos:r.undos,date:r.date},LESS.mate);
 if(mv>=MIN_FAST&&r.ms>0)out.ranks.time=ins(T.fast[r.id]||(T.fast[r.id]=[]),{ms:r.ms,plies:r.plies,undos:r.undos,date:r.date},LESS.fast);
-if(out.ranks.moves==1)out.newBest.push('moves');if(out.ranks.time==1)out.newBest.push('time')}}
-else if(r.res=='l'){out.streakFiled=p.streak;if(p.streak>0)ins(p.top.streaks,{n:p.streak,date:r.date},LESS.streaks);p.streak=0}
+if(out.ranks.moves==1)out.newBest.push('moves');if(out.ranks.time==1)out.newBest.push('time')}
+ const f=oppFloor(r.id);
+ if(f>(p.hi|0))p.hi=f;
+ if(f>=5&&bossOf(f)&&out.endless==f-FLOORS){out.boss=f;out.tower=towerOf(f);p.lv=MAXLV;out.lives=MAXLV;if(eloOf(f)>=3000)out.ultimate=true}}
+else if(r.res=='l'){out.streakFiled=p.streak;if(p.streak>0)ins(p.top.streaks,{n:p.streak,date:r.date},LESS.streaks);p.streak=0;
+ const em=EID.exec(r.id);
+ if(em&&+em[1]===(p.end|0)){const lv=(p.lv|0)-1;
+ if(lv>0){p.lv=lv;out.lives=lv}
+ else{const f=FLOORS+ +em[1];p.lv=MAXLV;p.end=towerBaseTier(f);out.wipe={tower:towerOf(f),floor:f,back:FLOORS+towerBaseTier(f),tier:p.end}}}}
 p.games.unshift({id:r.id,res:r.res,plies:r.plies,ms:r.ms,caps:r.caps,left:r.left,undos:r.undos,date:r.date,san:r.san});
 if(p.games.length>100)p.games.length=100;
 out.themes=themeKeys(p).filter(k=>!before.includes(k)).map(k=>{const q=k.split(':');return{kind:q[0],id:q[1]}});
@@ -2568,16 +2596,17 @@ const ou=$('ou'),ouc=$('ouc'),nx=$('nx');ou.classList.remove('on');ouc.classList
 if(gmode=='ladder'&&lastOut){const o=lastOut.out,L=[];
 if(lastOut.res=='w'){L.push('WIN STREAK: '+prof.streak+' (BEST '+prof.bestStreak+')');
 if(o.unlocked){unl=OPPS[OPP_ORDER.indexOf(o.unlocked)];L.push('NEW OPPONENT: '+unl.name+'!')}
-else if(o.cleared)L.push('LADDER CLEARED!');
+else if(o.cleared)L.push('LADDER CLEARED - THE TOWER OPENS!');
 if(o.bonus){unl=OPPS.find(x=>x.id==o.bonus);L.push('SECRET OPPONENT: '+unl.name+'!')}
-if(o.endlessOpen)L.push('ENDLESS LADDER OPEN: '+endOpp(1).name+' AWAITS!');
-if(o.endless){unl=endOpp(o.endless+1);L.push('ENDLESS TIER '+o.endless+' CLEARED! NEW RIVAL: '+unl.name+'!')}
+if(o.endlessOpen)L.push('FLOOR 5 AWAITS: '+endOpp(1).name+'!');
+if(o.boss){unl=endOpp(o.endless+1);L.push('FLOOR '+o.boss+' CLEARED - TOWER '+romanNum(o.tower)+' BOSS DOWN! TOWER '+romanNum(o.tower+1)+' BEGINS!'+(o.ultimate?' ULTIMATE ELO DEFEATED!':''));L.push('LIVES RESTORED')}
+else if(o.endless){unl=endOpp(o.endless+1);L.push('FLOOR '+(FLOORS+o.endless)+' CLEARED! NEXT: '+unl.name+'!')}
 if(o.ranks.moves==1)L.push('NEW BEST: FEWEST MOVES');else if(o.ranks.moves)L.push('TOP 5 FEWEST MOVES: #'+o.ranks.moves);
 if(o.ranks.time==1)L.push('NEW BEST: FASTEST WIN');else if(o.ranks.time)L.push('TOP 5 FASTEST WIN: #'+o.ranks.time);
 if(o.rankUp)L.push('NEW RANK: '+o.rankUp);
 for(const t of o.finishers)L.push('NEW FINISHER: '+FIN_PIECE[t]+' '+FIN_REQ[t].name);
 for(const t of o.themes)L.push('NEW THEME: '+TNAME[t.kind][t.id]+(t.kind=='board'?' BOARD':' PIECES'))}
-else if(lastOut.res=='l')L.push('STREAK LOST');else L.push('DRAW - STREAK KEPT AT '+prof.streak);
+else if(lastOut.res=='l'){L.push('STREAK LOST');if(o.wipe)L.push('OUT OF LIVES - TOWER '+romanNum(o.wipe.tower)+' ATTEMPT OVER! BACK TO FLOOR '+o.wipe.back+'.');else if(o.lives)L.push('LIVES LEFT: '+o.lives)}else L.push('DRAW - STREAK KEPT AT '+prof.streak);
 $('out').innerHTML=L.join('<br>');ou.classList.add('on');
 if(unl){portrait(ouc.getContext('2d'),unl,'h',false);ouc.classList.add('on');nx.textContent='NEXT: '+unl.name;nx.classList.add('on')}}
 else if(gmode=='online'&&p2p){ou.classList.add('on');eloReport((mate||flag)?(p2p.side==w?'w':'l'):'d')}
@@ -3017,26 +3046,36 @@ BUS.on('mate',e=>e.by=='b'?say('win','g',9):say('lose','s',9));
 BUS.on('draw',()=>say('draw','n',9));
 BUS.on('undo',()=>say('undo','g',8));
 BUS.on('hint',()=>say('hint','g',8,.6));
-function showOpp(){exh=false;renderOpp();scr('s-title',0);scr('s-opp',1)}
+function showOpp(){exh=false;renderOpp();scr('s-title',0);scr('s-opp',1);centerTower()}
+/* the tower: one list of floors with the summit up top; floors 1-4 are the campaign, 5+ recycle it */
+function towerName(f){return f<=FLOORS?OPPS[f-1].name:endOpp(f-FLOORS).name}
+function centerTower(){const sc=$('s-opp'),cu=document.querySelector('#ol .cur');if(!sc||!cu||!sc.clientHeight)return;const a=cu.getBoundingClientRect(),b=sc.getBoundingClientRect();sc.scrollTop+=Math.round((a.top-b.top)-(sc.clientHeight-a.height)/2)}
 function renderOpp(){const L=$('ol');L.innerHTML='';
-OPPS.forEach((o,i)=>{const open=isUnlocked(prof,o.id);if(o.secret&&!open)return;const can=open||exh,r=prof.rec[o.id]||{w:0,l:0,d:0};
-const bt=document.createElement('button');bt.className='oc'+(open?'':' lk')+(!open&&exh?' ex':'');bt.setAttribute('aria-disabled',can?'false':'true');
-const cn=document.createElement('canvas');cn.width=cn.height=96;portrait(cn.getContext('2d'),o,'h',false);
+const f=curFloor(prof),nbf=Math.max(8,Math.ceil(f/8)*8);
+const hd=document.createElement('div');hd.className='lab';hd.textContent=(f==nbf?'TOWER BOSS NOW: ':'NEXT BOSS: ')+'FLOOR '+nbf+' - '+endOpp(nbf-FLOORS).name+' - ELO '+eloOf(nbf);L.appendChild(hd);
+const topF=Math.max(f,Math.min(f+3,nbf)),botF=Math.max(1,f-3);
+for(let ff=topF;ff>=botF;ff--){const cur=ff==f,boss=bossOf(ff);
+let o,open,sealed=false;
+if(ff<=FLOORS){o=OPPS[ff-1];open=isUnlocked(prof,o.id);sealed=!!(o.secret&&!open)}
+else{o=endOpp(ff-FLOORS);open=ff<=f}
+const can=!sealed&&(open||exh),r=prof.rec[o.id]||{w:0,l:0,d:0};
+const bt=document.createElement('button');bt.className='oc'+(open||sealed?'':' lk')+(cur?' cur':'')+(boss?' boss':'')+(sealed?' sealed':'')+(!open&&exh&&!sealed?' ex':'');bt.dataset.f=ff;bt.setAttribute('aria-disabled',can?'false':'true');
+const cn=document.createElement('canvas');cn.width=cn.height=96;
+if(sealed){const g=cn.getContext('2d');g.fillStyle='#0a0618';g.fillRect(0,0,96,96);g.fillStyle='#241743';g.fillRect(44,24,8,44);g.fillRect(28,34,40,8);g.fillStyle='#39245f';g.fillRect(62,54,7,7)}
+else{portrait(cn.getContext('2d'),o,'h',false);
+if(boss){const g=cn.getContext('2d');g.fillStyle='#ffd23f';g.fillRect(74,13,20,4);g.fillRect(74,7,4,6);g.fillRect(84,4,4,9);g.fillRect(90,7,4,6)}}
 const tx=document.createElement('span');tx.className='ot';
-const em=open?(r.w+r.l+r.d?'W'+r.w+' L'+r.l+' D'+r.d+(r.w?' - BEATEN':''):'NOT PLAYED YET'):(exh?'LOCKED - EXHIBITION':'LOCKED - BEAT '+OPPS[i-1].name);
-tx.innerHTML='<b>'+o.name+'</b><i>'+o.tag+'</i><u>'+o.lv+'</u><em>'+em+'</em>';bt.append(cn,tx);
-bt.onclick=()=>{if(!can)return;scr('s-opp',0);startGame(1,o,exh||!open)};L.appendChild(bt)});
-const end=prof.end|0;
-if(end>0){const hd=document.createElement('div');hd.className='lab';hd.textContent='ENDLESS LADDER - TIER '+end;L.appendChild(hd);
-for(let n=Math.max(1,end-1);n<=end+1;n++){const o=endOpp(n),open=n<=end,r=prof.rec[o.id]||{w:0,l:0,d:0};
-const bt=document.createElement('button');bt.className='oc'+(open?'':' lk');bt.setAttribute('aria-disabled',open?'false':'true');
-const cn=document.createElement('canvas');cn.width=cn.height=96;portrait(cn.getContext('2d'),o,'h',false);
-const tx=document.createElement('span');tx.className='ot';
-const em=open?(r.w+r.l+r.d?(n<end?'BEATEN':'CURRENT')+' - W'+r.w+' L'+r.l+' D'+r.d:'NOT PLAYED YET'):'LOCKED - BEAT '+endOpp(n-1).name;
-tx.innerHTML='<b>'+o.name+'</b><i>'+o.tag+'</i><u>'+o.lv+'</u><em>'+em+'</em>';bt.append(cn,tx);
-bt.onclick=()=>{if(!open)return;scr('s-opp',0);startGame(1,o,false)};L.appendChild(bt)}}
-$('osm').textContent=(exh?'EXHIBITION - NOT COUNTED, UNLIMITED UNDO':'LADDER - 3 UNDOS PER GAME')+' | STREAK '+prof.streak+' BEST '+prof.bestStreak+(end>0?' | ENDLESS TIER '+end:'')+(store?'':' | PROGRESS NOT SAVED ON THIS DEVICE');
-$('ex').textContent='EXHIBITION: '+(exh?'ON':'OFF')}
+let em,u;
+if(sealed){u='FLOOR '+ff+' - ELO '+eloOf(ff);em='SEALED - BEAT '+towerName(3)}
+else{u=(boss?'TOWER BOSS - ':'')+'FLOOR '+ff+(ff<=FLOORS?' - '+o.lv:'')+' - ELO '+eloOf(ff);
+if(cur)em='YOU ARE HERE';
+else if(open)em=r.w+r.l+r.d?'BEATEN - W'+r.w+' L'+r.l+' D'+r.d:'NOT PLAYED YET';
+else em=exh?'EXHIBITION - NOT PLAYED':'LOCKED - BEAT '+(ff-1===FLOORS&&!isUnlocked(prof,'nox')?'FLOOR 4':towerName(ff-1))}
+tx.innerHTML='<b>'+(sealed?'?????':o.name)+'</b><i>'+(sealed?'SEALED':o.tag)+'</i><u>'+u+'</u><em>'+em+'</em>';
+bt.append(cn,tx);
+bt.onclick=()=>{if(!can)return;scr('s-opp',0);startGame(1,o,exh||!open)};L.appendChild(bt)}
+$('osm').textContent=(exh?'EXHIBITION - NOT COUNTED, UNLIMITED UNDO':'THE TOWER - TOWER '+romanNum(towerOf(f))+' - FLOOR '+f+' - ELO '+eloOf(f)+' - LIVES '+(prof.lv|0)+'/'+MAXLV)+' | STREAK '+prof.streak+' BEST '+prof.bestStreak+(store?'':' | PROGRESS NOT SAVED ON THIS DEVICE');
+$('ex').textContent='EXHIBITION: '+(exh?'ON':'OFF');centerTower()}
 /* ---- themes and profile screens ---- */
 const reqText=q=>!q?'':q.beat?'BEAT '+OPPS[OPP_ORDER.indexOf(q.beat)].name:q.streak+' WIN STREAK';
 function sprTo(g,p,X,Y){const rows=SPR[p[1]],pal=PAL[p[0]];rows.forEach((row,y)=>{for(let x=0;x<16;x++){const ch=row[x];if(ch!='.'){g.fillStyle=pal[ch];g.fillRect(X+x,Y+y,1,1)}}})}
@@ -3068,8 +3107,8 @@ let h='';const t=prof.total;
 if(pfTab==0){h+='<div class="px ps"><h3>ALL LADDER GAMES</h3>'+lnRow('WINS / LOSSES / DRAWS',t.w+' / '+t.l+' / '+t.d)+lnRow('WIN STREAK NOW',prof.streak)+lnRow('BEST WIN STREAK',prof.bestStreak)+lnRow('RANK',xpTitle(prof.xp||0)+' - '+(prof.xp||0)+' XP')+lnRow('PUZZLE STREAK',prof.puz.streak+' (BEST '+prof.puz.best+')')+'</div>';
 h+='<div class="px ps"><h3>BY OPPONENT</h3>';
 for(const o of OPPS){if(!isUnlocked(prof,o.id)){h+=lnRow('???','LOCKED');continue}const r=prof.rec[o.id]||{w:0,l:0,d:0};h+=lnRow(o.name,'W'+r.w+' L'+r.l+' D'+r.d)}
-if((prof.end|0)>0){let ew=0,el=0,ed=0;for(const id in prof.rec)if(EID.test(id)){const r=prof.rec[id];ew+=r.w;el+=r.l;ed+=r.d}
-h+=lnRow('ENDLESS TIERS BEATEN',Math.max(0,(prof.end|0)-1))+lnRow('ENDLESS RIVALS','W'+ew+' L'+el+' D'+ed)}
+if((prof.hi|0)>0||(prof.end|0)>0){let ew=0,el=0,ed=0,bn=0;for(const id in prof.rec){const m=EID.exec(id);if(!m)continue;const r=prof.rec[id];ew+=r.w;el+=r.l;ed+=r.d;if(r.w>0&&bossOf(FLOORS+ +m[1]))bn++}
+h+=lnRow('TOWER FLOOR',prof.hi|0)+lnRow('TOWER ELO',eloOf(prof.hi|0))+lnRow('TOWERS CLEARED',bn)+lnRow('TOWER RIVALS','W'+ew+' L'+el+' D'+ed)+lnRow('LIVES',(prof.lv|0)+' / '+MAXLV)}
 h+='</div>';
 h+='<div class="px ps"><h3>WORLD BOARD NAME</h3><div class="ln"><span>NAME</span><span><input id="pfname" maxlength="12" value="'+prof.name+'"></span></div><div class="ln"><span>INITIALS</span><span><input id="pfini" maxlength="3" value="'+(prof.initials||mkInitials(prof.name))+'"></span></div></div>'}
 else if(pfTab==1){const L=streakBoard(prof);h+='<div class="px ps"><h3>BEST WIN STREAKS</h3>';

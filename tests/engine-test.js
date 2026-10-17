@@ -243,7 +243,9 @@ eq('queen attacked by a defended bishop trembles', T('4k3/8/8/3q4/8/5B2/8/4K3 b 
 eq('kings never tremble', T('4k3/8/8/8/8/8/4q3/4K3 w - -').includes('7,4'), false);
 
 // --- profile / ladder rules ---
-const P = new Function(html.split('/*PROF*/')[1].split('/*PROFEND*/')[0] + ';return{loadProfile,saveProfile,recordResult,newProfile,isUnlocked,PKEY,themeUnlocked,setTheme,streakBoard,MIN_FAST,THEME_REQ,xpTitle,mkInitials,finUnlocked,setFin,finKeys,FIN_REQ,romanNum,EID}')();
+// OPPS lives outside the PROF block (it's the campaign cast); endOpp needs it, so the sandbox gets a stub
+const OPPSTUB = [{ name: 'MOSSBACK', tag: 'THE CHEERFUL GARDENER', lv: 'EASY', lvl: 0, p: { bl: .14, a: 0, c: 0 } }, { name: 'LADY VEX', tag: 'SASSY, SNEAKY, SHARP', lv: 'NORMAL', lvl: 1, p: { bl: .02, a: 1.2, c: 0 } }, { name: 'OLD DUNE', tag: 'THE CALM DESERT SAGE', lv: 'HARD', lvl: 2, p: { bl: 0, a: 0, c: 1 } }, { name: 'NOX', tag: 'THE VOID BETWEEN STARS', lv: 'SECRET', lvl: 2, p: { bl: 0, a: 1, c: 1 } }];
+const P = new Function('OPPS', html.split('/*PROF*/')[1].split('/*PROFEND*/')[0] + ';return{loadProfile,saveProfile,recordResult,newProfile,isUnlocked,PKEY,themeUnlocked,setTheme,streakBoard,MIN_FAST,THEME_REQ,xpTitle,mkInitials,finUnlocked,setFin,finKeys,FIN_REQ,romanNum,EID,endOpp,oppById,eloOf,bossOf,curFloor,towerOf,towerBaseFloor,towerBaseTier,oppFloor}')(OPPSTUB);
 const mem = () => { const d = {}; return { getItem: k => (k in d ? d[k] : null), setItem: (k, v) => { d[k] = String(v); }, d }; };
 const R = (id, res, o = {}) => Object.assign({ id, res, mate: res !== 'd', plies: 41, ms: 90000, caps: 3, left: 9, undos: 0, san: 'e4', date: 1 }, o);
 {
@@ -349,42 +351,74 @@ const R = (id, res, o = {}) => Object.assign({ id, res, mate: res !== 'd', plies
   for (let i = 0; i < 120; i++) P.recordResult(p, R('moss', 'w'));
   eq('game history capped at 100', p.games.length, 100);
   eq('history keeps the move list', typeof p.games[0].san, 'string');
+  eq('campaign losses never burn tower lives', p.lv, 3);
 }
-// --- endless ladder ---
+// --- the tower: floors, bosses, lives, wipes ---
 {
   eq('roman numerals', [P.romanNum(1), P.romanNum(4), P.romanNum(9), P.romanNum(58), P.romanNum(999), P.romanNum(0)], ['I', 'IV', 'IX', 'LVIII', 'CMXCIX', 'I']);
   eq('endless id shape', [P.EID.test('e1'), P.EID.test('e999'), P.EID.test('e0'), P.EID.test('e1000'), P.EID.test('nox')], [true, true, false, false, false]);
   const p = P.newProfile();
-  eq('fresh profile: endless locked', p.end, 0);
+  eq('fresh profile: floor 1 with full lives', [p.end, p.hi, p.lv, P.curFloor(p)], [0, 0, 3, 1]);
+  eq('campaign holds floors 1-4, tier n is floor n+4', [P.oppFloor('moss'), P.oppFloor('nox'), P.oppFloor('e1'), P.oppFloor('e57'), P.oppFloor('zz'), P.oppFloor(null)], [1, 4, 5, 61, 0, 0]);
+  eq('towers group floors in 8s', [P.towerOf(1), P.towerOf(8), P.towerOf(9), P.towerOf(16), P.towerBaseFloor(16), P.towerBaseTier(16), P.towerBaseTier(8)], [1, 1, 2, 2, 9, 5, 1]);
+  eq('floor elo rises 50 a floor', [P.eloOf(1), P.eloOf(4), P.eloOf(8), P.eloOf(16), P.eloOf(40)], [1050, 1200, 1400, 1800, 3000]);
+  eq('bosses land on every 8th floor', [P.bossOf(8), P.bossOf(16), P.bossOf(40), P.bossOf(5), P.bossOf(0)], [true, true, true, false, false]);
+  const e1 = P.endOpp(1), e4 = P.endOpp(4), e8 = P.endOpp(8), e12 = P.endOpp(12), e57 = P.endOpp(57), e60 = P.endOpp(60);
+  eq('tiers recycle the cast with floor roman numerals', [e1.name, e1.lv, e1.ms, e12.name, e57.name, e60.name], ['MOSSBACK V', 'FLOOR 5', 260, 'NOX XVI', 'MOSSBACK LXI', 'NOX LXIV']);
+  eq('boss tiers are maxed out', [e4.boss, e4.ms, e4.p.bl, e12.boss, e12.ms, e12.p.bl, e60.boss], [true, 1800, 0, true, 1800, 0, true]);
+  eq('non-boss tiers keep scaling then cap', [e8.boss, e8.ms, e8.p.bl, e57.boss, e57.ms, e57.p.bl, e57.lvl, P.oppById('e57').id, P.oppById('x9')], [false, 1200, 0, false, 1800, 0, 1, 'e57', null]);
   P.recordResult(p, R('moss', 'w')); P.recordResult(p, R('vex', 'w'));
   let o = P.recordResult(p, R('dune', 'w'));
-  eq('clearing opens endless tier 1', [o.cleared, o.endlessOpen, p.end], [true, true, 1]);
+  eq('clearing the campaign opens the tower', [o.cleared, o.endlessOpen, p.end, P.curFloor(p)], [true, true, 1, 4]);
   o = P.recordResult(p, R('dune', 'w'));
-  eq('endless opens only once', [o.cleared, o.endlessOpen, p.end], [false, false, 1]);
+  eq('the tower opens only once', [o.cleared, o.endlessOpen, p.end], [false, false, 1]);
+  o = P.recordResult(p, R('nox', 'w'));
+  eq('beating the secret NOX reaches floor 5', [P.curFloor(p), p.hi], [5, 4]);
   o = P.recordResult(p, R('e1', 'w'));
-  eq('beating tier 1 unlocks tier 2', [o.endless, p.end, o.ranks], [1, 2, { time: 0, moves: 0 }]);
-  eq('endless wins stay out of the world-board tops', [p.top.fast.e1, p.top.mate.e1], [undefined, undefined]);
+  eq('beating tier 1 climbs to floor 6, best floor 5', [o.endless, p.end, p.hi, o.ranks], [1, 2, 5, { time: 0, moves: 0 }]);
+  eq('tower wins stay out of the world-board tops', [p.top.fast.e1, p.top.mate.e1], [undefined, undefined]);
   o = P.recordResult(p, R('e1', 'w'));
-  eq('replaying a beaten tier advances nothing', [o.endless, p.end], [0, 2]);
-  P.recordResult(p, R('e2', 'l'));
-  eq('losing to the current tier keeps it', [p.end, p.rec.e2.l], [2, 1]);
+  eq('replaying a beaten floor advances nothing', [o.endless, p.end], [0, 2]);
+  o = P.recordResult(p, R('e1', 'l'));
+  eq('a loss on a beaten floor costs no life', [p.lv, o.lives, o.wipe], [3, 0, null]);
+  o = P.recordResult(p, R('e2', 'l'));
+  eq('a loss on the current floor burns a life', [p.end, p.lv, o.lives], [2, 2, 2]);
+  P.recordResult(p, R('e2', 'd'));
+  eq('a draw on the current floor costs nothing', [p.end, p.lv], [2, 2]);
   o = P.recordResult(p, R('e2', 'w'));
-  eq('beating the current tier advances', [o.endless, p.end], [2, 3]);
-  o = P.recordResult(p, R('e99', 'w'));
-  eq('beating a future tier advances nothing', [o.endless, p.end], [0, 3]);
+  eq('beating the current floor advances', [o.endless, p.end, p.hi], [2, 3, 6]);
+  P.recordResult(p, R('e3', 'w'));
+  eq('climbing keeps the best floor', [p.end, p.hi, p.lv], [4, 7, 2]);
+  o = P.recordResult(p, R('e4', 'w'));
+  eq('the floor 8 boss refills lives and reports the tower', [o.boss, o.tower, o.lives, o.ultimate, p.end, p.hi, p.lv], [8, 1, 3, false, 5, 8, 3]);
+  o = P.recordResult(p, R('e4', 'w'));
+  eq('rematching a beaten boss keeps your lives', [o.boss, o.lives, p.end], [0, 0, 5]);
+  p.end = 12; p.lv = 1;
+  o = P.recordResult(p, R('e12', 'l'));
+  eq('the last life wipes back to the tower base', [o.lives, o.wipe, p.end, p.lv, p.hi], [0, { tower: 2, floor: 16, back: 9, tier: 5 }, 5, 3, 8]);
+  const t1 = P.newProfile(); t1.end = 2; t1.lv = 1;
+  o = P.recordResult(t1, R('e2', 'l'));
+  eq('a first-tower wipe returns to floor 5', [o.wipe, t1.end, t1.lv], [{ tower: 1, floor: 6, back: 5, tier: 1 }, 1, 3]);
+  p.end = 36; p.lv = 1;
+  o = P.recordResult(p, R('e36', 'w'));
+  eq('the floor 40 boss is the ultimate elo', [o.boss, o.tower, o.ultimate, o.lives, p.end, p.hi, p.lv], [40, 5, true, 3, 37, 40, 3]);
   const st = mem();
   P.saveProfile(st, p);
   const q = P.loadProfile(st);
-  eq('endless progress survives a reload', [q.end, q.rec.e2, q.games.some(g => g.id === 'e1')], [3, { w: 1, l: 1, d: 0 }, true]);
+  eq('tower progress survives a reload', [q.end, q.hi, q.lv, q.rec.e2, q.games.some(g => g.id === 'e1')], [37, 40, 3, { w: 1, l: 1, d: 1 }, true]);
+  eq('the secret NOX record survives a reload', [q.rec.nox, q.unlocked.includes('nox')], [{ w: 1, l: 0, d: 0 }, true]);
   st.d[P.PKEY] = JSON.stringify({ v: 1, unlocked: ['nox', 'e1', 'bogus'], end: 42.7, rec: { e0: { w: 9 }, e7: { w: 2 }, zz: { w: 3 } } });
   const r = P.loadProfile(st);
-  eq('endless save is sanitised', [r.unlocked, r.end, Object.keys(r.rec)], [['moss', 'nox'], 42, ['e7']]);
+  eq('tower save is sanitised', [r.unlocked, r.end, r.hi, r.lv, Object.keys(r.rec)], [['moss', 'nox'], 42, 11, 3, ['e7']]);
   st.d[P.PKEY] = JSON.stringify({ v: 1, unlocked: ['moss', 'vex', 'dune'], rec: { moss: { w: 1 }, vex: { w: 1 }, dune: { w: 1, l: 1, d: 0 } } });
   const v = P.loadProfile(st);
-  eq('veteran saves get NOX and tier 1 back', [v.unlocked, v.end], [['moss', 'vex', 'dune', 'nox'], 1]);
+  eq('veteran saves get NOX, tier 1, and floor credit', [v.unlocked, v.end, v.hi, v.lv, P.curFloor(v)], [['moss', 'vex', 'dune', 'nox'], 1, 3, 3, 4]);
   st.d[P.PKEY] = JSON.stringify({ v: 1, unlocked: ['moss', 'vex', 'dune'], rec: { dune: { w: 0, l: 2, d: 0 } } });
   const u = P.loadProfile(st);
-  eq('a Dune loss unlocks nothing', [u.unlocked, u.end], [['moss', 'vex', 'dune'], 0]);
+  eq('a Dune loss unlocks nothing', [u.unlocked, u.end, u.hi], [['moss', 'vex', 'dune'], 0, 0]);
+  st.d[P.PKEY] = JSON.stringify({ v: 1, hi: 999, lv: 9, rec: {} });
+  const w = P.loadProfile(st);
+  eq('tampered tower fields clamp', [w.hi, w.lv], [999, 3]);
 }
 {
   const st = mem(); let p = P.newProfile();

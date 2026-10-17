@@ -26,7 +26,7 @@ const { chromium } = require('playwright');
     for (let i = 0; i < d.length; i += 4) if (d[i] === r && d[i + 1] === g && d[i + 2] === b) n++;
     return n;
   }, [x0, y0, w0, h0, hex]);
-  const start = async () => { await pg.click('[data-m="1"]'); await pg.locator('.oc').first().click(); await pg.waitForTimeout(150); };
+  const start = async () => { await pg.click('[data-m="1"]'); await pg.locator('.oc.cur').click(); await pg.waitForTimeout(150); };
   const dotAt = async (fr, fc, tr, tc) => { await pg.evaluate(([fr, fc]) => { sel = [fr, fc]; moves = legal(b, fr, fc); draw(); }, [fr, fc]); return cvPx(tc * 20 + 10, tr * 20 + 9); };
   const capture = async () => {
     await pg.evaluate(() => {

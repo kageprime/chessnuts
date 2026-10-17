@@ -3,7 +3,7 @@
 Standalone retro pixel-art chess game.
 
 ## Features
-- **Endless AI Ladder**: Challenge Mossback, Lady Vex, Old Dune, and the secret NOX with dynamic tutor dialogue — then keep climbing: every rival you beat past the campaign returns as a harder, roman-numbered tier with a bigger thinking budget.
+- **The Tower**: Challenge Mossback, Lady Vex, Old Dune, and the secret NOX with dynamic tutor dialogue — then climb floor by floor: every rival returns past the campaign as a harder, roman-numbered tier, tower bosses (1800ms, zero blunders) guard every 8th floor, and floor 40 is the 3000-Elo ULTIMATE ELO. You climb on 3 lives: a loss on your current floor burns one, and the last life wipes you back to the current tower's base floor. Draws and rematches are free.
 - **Online Multiplayer**: One-tap quick match with XP-based pairing, shareable challenge links, in-game emotes, online Elo ratings, real-time peer-to-peer WebRTC, and cross-tab offline play.
 - **Tactical Analytics**: Daily Puzzle with a 30-day archive (past days replay as no-XP practice), Mistake Trainer (drills from your worst moves, +5 XP each once a day), Puzzle Survival mode, Game Review & Accuracy Report Card, Opening Banners, and Eval Gauge.
 - **Ghost Replays**: World-board records keep the record holder's full game; "RACE THE GHOST" shadows their moves on your board while you try to mate faster.

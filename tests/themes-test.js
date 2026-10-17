@@ -42,7 +42,7 @@ const { chromium } = require('playwright');
     ok(name + ' streak tab empty state', /NO STREAKS YET/.test(await pg.locator('#pbody').innerText()));
     await pg.click('#pfb');
     // first ladder win -> Midnight unlocked, mentioned on the result panel
-    await pg.click('[data-m="1"]'); await pg.locator('.oc').first().click(); await mate(pg);
+    await pg.click('[data-m="1"]'); await pg.locator('#ol .oc[data-f="1"]').click(); await mate(pg);
     const t = await pg.locator('#out').innerText();
     ok(name + ' result panel announces the new theme', /NEW THEME: MIDNIGHT BOARD/.test(t), t);
     ok(name + ' result panel shows new bests', /NEW BEST: FEWEST MOVES/.test(t));
@@ -58,10 +58,10 @@ const { chromium } = require('playwright');
     await pg.screenshot({ path: `themes-${name}-midnight.png` });
     await pg.click('#thb');
     // a scene theme is overridden by the theme, and returns with "Scene"
-    await pg.click('[data-m="1"]'); await pg.locator('.oc').first().click();
+    await pg.click('[data-m="1"]'); await pg.locator('#ol .oc[data-f="1"]').click();
     ok(name + ' theme overrides the scene board in a game', (await px(pg, 30, 10)) === '#2b3a67');
     await pg.click('#pz'); await pg.click('#qt'); await pg.click('#th'); await pg.locator('#tb .tc').first().click();
-    await pg.click('#thb'); await pg.click('[data-m="1"]'); await pg.locator('.oc').first().click();
+    await pg.click('#thb'); await pg.click('[data-m="1"]'); await pg.locator('#ol .oc[data-f="1"]').click();
     ok(name + ' Scene option brings the garden board back', (await px(pg, 30, 10)) === '#5f8a3e', await px(pg, 30, 10));
     await pg.reload(); await pg.evaluate(() => { fx = false; snd = false; });
     ok(name + ' unlocks and choice survive a reload', await pg.evaluate(() => themeUnlocked(prof, 'board', 'midnight') && prof.theme.board === 'scene'));

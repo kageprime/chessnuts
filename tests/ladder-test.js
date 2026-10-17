@@ -28,7 +28,7 @@ const { chromium } = require('playwright');
     await pg.click('#ex');
     ok(name + ' exhibition toggle on', (await pg.locator('#ex').innerText()) === 'EXHIBITION: ON');
     ok(name + ' last card still on screen', await (async () => { const r = await pg.locator('.oc').last().boundingBox(); return r.y + r.height <= vp.height && r.x + r.width <= vp.width; })());
-    await pg.locator('.oc').nth(1).click();
+    await pg.locator('#ol .oc[data-f="2"]').click();
     ok(name + ' exhibition lets you play locked Lady Vex', await pg.evaluate(() => inGame && opp.id === 'vex' && gmode === 'exh'));
     ok(name + ' exhibition undo has no counter', (await pg.locator('#un').innerText()) === 'UNDO');
     await mate(pg);
@@ -36,7 +36,7 @@ const { chromium } = require('playwright');
     ok(name + ' no ladder panel after exhibition', (await pg.locator('#ou.on').count()) === 0);
     await pg.click('#mn'); await pg.click('[data-m="1"]');
     ok(name + ' exhibition resets to off when reopened', (await pg.locator('#ex').innerText()) === 'EXHIBITION: OFF');
-    await pg.locator('.oc').first().click();
+    await pg.locator('.oc.cur').click();
     ok(name + ' ladder game starts with 3 undos', (await pg.locator('#un').innerText()) === 'UNDO 3');
     await mate(pg);
     ok(name + ' win unlocks Lady Vex', await pg.evaluate(() => isUnlocked(prof, 'vex') && prof.streak === 1));
@@ -49,14 +49,14 @@ const { chromium } = require('playwright');
     await pg.reload();
     ok(name + ' progress survives a reload', await pg.evaluate(() => isUnlocked(prof, 'vex') && prof.total.w === 1));
     await pg.click('[data-m="1"]');
-    ok(name + ' after reload only Dune is locked', (await pg.locator('.oc.lk').count()) === 1);
+    ok(name + ' after reload only Dune of the campaign is locked', (await pg.locator('#ol .oc.lk').count()) === 2 && (await pg.locator('#ol .oc[data-f="3"]').getAttribute('class')).includes('lk'));
     await pg.context().close();
   }
   // undo limit
   {
     const pg = await mk({ width: 390, height: 780 });
     await pg.evaluate(() => { fx = false; snd = false; });
-    await pg.click('[data-m="1"]'); await pg.locator('.oc').first().click();
+    await pg.click('[data-m="1"]'); await pg.locator('.oc.cur').click();
     for (let i = 3; i >= 1; i--) {
       await pg.evaluate(() => { const e = hist.length; if (turn == 'w' && !hist.length) play(6, 4, 4, 4, 'Q'); });
       await pg.waitForFunction(() => hist.length >= 2 && turn == 'w' && !an && !sa, null, { timeout: 8000 });
@@ -78,7 +78,7 @@ const { chromium } = require('playwright');
   {
     const pg = await mk({ width: 390, height: 780 });
     await pg.evaluate(() => { fx = false; snd = false; });
-    await pg.click('[data-m="1"]'); await pg.locator('.oc').first().click();
+    await pg.click('[data-m="1"]'); await pg.locator('.oc.cur').click();
     await mate(pg); await pg.click('#rm');
     ok('rematch keeps the same opponent and mode', await pg.evaluate(() => opp.id === 'moss' && gmode === 'ladder' && !over));
     await pg.evaluate(() => {   // stalemate: black to move, no moves
@@ -109,7 +109,7 @@ const { chromium } = require('playwright');
     await pg.evaluate(() => { fx = false; snd = false; });
     await pg.click('[data-m="1"]');
     ok('blocked storage: warning shown', /NOT SAVED/.test(await pg.locator('#osm').innerText()));
-    await pg.locator('.oc').first().click();
+    await pg.locator('.oc.cur').click();
     await mate(pg);
     ok('blocked storage: game plays and result shows', await pg.evaluate(() => isUnlocked(prof, 'vex')) && (await pg.locator('#nx.on').count()) === 1);
     await pg.context().close();

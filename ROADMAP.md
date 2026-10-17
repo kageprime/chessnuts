@@ -12,8 +12,9 @@ on, so implementation details stay grounded in what exists. Tag meanings: **(S)*
 
 ## Current state (so we don't re-build what exists)
 
-- 4 opponents (Mossback, Lady Vex, Old Dune, Nox) with per-opponent palettes, taunts, dialogue, plus an
-  endless ladder of procedural tiers (roman-numeral rivals) past the campaign
+- The Tower: 4 opponents (Mossback, Lady Vex, Old Dune, Nox) with per-opponent palettes, taunts and
+  dialogue, then endless procedural tiers (roman-numeral rivals) — bosses every 8th floor, 3 lives,
+  floor 40 = ULTIMATE ELO (3000)
 - Local blitz (1/3/5 min, 3+2 and 5+3 increments, flag fall); undo, hint, pause, resume saves
 - Daily puzzle (`puz.last` day-keyed, +25 XP, streak) and Puzzle Survival
 - Game review + accuracy report, opening banners, eval gauge, Kibitz commentary with expressions
@@ -23,7 +24,7 @@ on, so implementation details stay grounded in what exists. Tag meanings: **(S)*
 - Themes (4 boards + 3 pieces), 12 trophies, XP + ranks, HD vector artwork toggle
 - PWA: `sw.js` precaches the shell, offline fully playable, Vercel-deployed
 - 20 test suites in `npm test` (engine, API, P2P, server, matchmaking, SW, smoke, commentary, commentator,
-  puzzle, blitz, trainer, ghost, startmenu, install, ladder, endless, themes, colorblind, layout)
+  puzzle, blitz, trainer, ghost, startmenu, install, ladder, tower, themes, colorblind, layout)
 
 ## Principles (keep these true)
 
@@ -85,16 +86,21 @@ The room-code flow is the weakest link. Everything here reuses the existing sign
       practice; keeps streak display but adds history (uses the date-seeded generator, so it works offline).
       Shipped: calendar button beside DAILY PUZZLE, 30-day grid from `prof.puz.days` (capped at 120 keys),
       past days auto-run as practice (no XP, no streak, no history write).
-- [x] **(M/L)** Endless ladder — after Nox, procedurally unlock rivals: reuse the `OPPS` shape
-      (palette + taunts + `sty`), scale engine strength with XP, tease names ahead. Gives the ladder
-      an infinite ceiling using systems that already exist.
-      Shipped: clearing the campaign opens tier 1 (`MOSSBACK I`); each win vs the current tier unlocks the
-      next. Tiers recycle the four campaign rivals with roman numerals (base cycle every 4), sharper every
-      cycle (blunder rate down, one search level above base) and a bigger thinking budget (+300ms/cycle,
-      capped at 1.8s). The ladder screen shows the last beaten tier, the current one, and the next one
-      locked with its "BEAT ..." teaser; records (`rec.eN`), progress (`prof.end`), and snapshots all
-      persist, and endless ids never post to world boards. Fixes a latent bug where the NOX unlock was
-      dropped on reload; veteran saves with a beaten Dune get NOX and tier 1 restored on load.
+- [x] **(M/L)** The Tower — an endless climb past the campaign: reuse the `OPPS` shape (palette + taunts
+      + `sty`), scale engine strength with tier, tease names ahead.
+      Shipped: the ladder screen is now THE TOWER, summit-first, windowed around your current floor
+      (f-3..f+3, capped at the next boss) with a next-boss tracker and sealed `?????` rows for rivals
+      you haven't earned. Floors 1–4 are the campaign (NOX is a sealed mini-boss until Dune falls);
+      floor f≥5 is tier f-4, recycling the four rivals with roman numerals named for the floor, sharper
+      every cycle (blunder rate down, one search level up, +300ms/cycle capped at 1.8s). A tower boss
+      guards every 8th floor — the NOX-tier slot maxed out (1800ms, zero blunders, "TOWER BOSS" crest)
+      — and floor 40 is the 3000-Elo ULTIMATE ELO. You climb on 3 lives (`prof.lv`): a loss on your
+      current floor burns one, the last life wipes you back to that tower's first endless floor (5 in
+      TOWER I, 9 in TOWER II, …), draws are free, and rematches never burn or advance. Boss wins
+      refill lives on a frontier clear only, and career-best floor (`prof.hi`) never drops. Records
+      (`rec.eN`), progress (`prof.end`), lives and career-best persist, and tower ids never post to
+      world boards. Fixes a latent bug where the NOX unlock was dropped on reload; veteran saves with
+      a beaten Dune get NOX and tier 1 restored on load.
 - [x] **(S)** Time controls — add increment (3+2, 5+3) and bullet (1 min) to `blitzCycle`; clocks
       already tick correctly, so this is mostly UI + a couple of edge cases in `clockTick`/`flagFall`.
       Shipped: cycle walks OFF → 1 → 3 → 5 → 3+2 → 5+3; Fischer increment added to the mover's clock

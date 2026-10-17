@@ -7,7 +7,7 @@ for(const [name,vp,oi] of [['1920',{width:1920,height:1080},1],['1280',{width:12
  const pg=await br.newPage({viewport:vp});pg.on('pageerror',e=>errs.push(name+': '+e.message));
  await pg.goto('file://'+__dirname+'/../chess/index.html');await pg.click('[data-m="1"]');
  await pg.screenshot({path:S+`w-${name}-select.png`});
- if(oi)await pg.click('#ex');await pg.locator('.oc').nth(oi).click();await pg.waitForTimeout(500);
+ if(oi)await pg.click('#ex');await pg.locator('#ol .oc[data-f="'+(oi+1)+'"]').click();await pg.waitForTimeout(500);
  ok(name+' wide class on',await pg.evaluate(()=>$('app').classList.contains('wd')));
  // play a few moves so the panel has content
  await pg.evaluate(()=>{fx=false;snd=false});
