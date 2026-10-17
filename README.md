@@ -4,14 +4,23 @@ Standalone retro pixel-art chess game.
 
 ## Features
 - **3-Tier AI Bot Ladder**: Challenge Mossback, Lady Vex, and Old Dune with dynamic tutor dialogue.
-- **Online Multiplayer**: Real-time peer-to-peer WebRTC matchmaking with 6-character room codes.
+- **Online Multiplayer**: Real-time peer-to-peer WebRTC matchmaking with 4-letter room codes and cross-tab offline play.
 - **Tactical Analytics**: Puzzle Survival mode, Game Review & Accuracy Report Card, Opening Banners, and Eval Gauge.
 - **Unlockable Retro Themes**: Boards (Midnight, Candy, Glacier, Ember) and pieces (Jade, Gold, Neon).
 - **Console Trophies**: 12 declarative achievements with XP awards.
 - **Offline / PWA Ready**: `sw.js` caches the app shell, so the game installs and plays offline; 100% playable directly in a browser with no server dependencies.
 
 ## Quick Start
-Open `chess/index.html` (or `index.html`) in any web browser.
+
+### Local Server & Multiplayer (Recommended)
+Run the built-in server with P2P WebRTC signaling:
+```bash
+npm start
+```
+Then open `http://localhost:3000` (or your local IP address shown in the terminal to play with devices on the same Wi-Fi).
+
+### Direct Browser / Offline Cross-Tab
+You can also open `chess/index.html` (or `index.html`) directly in any browser. Local multiplayer across multiple browser windows or tabs works automatically offline.
 
 ## Running Tests
 ```bash

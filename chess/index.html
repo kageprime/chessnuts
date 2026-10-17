@@ -1061,17 +1061,33 @@ if(pfTab==4)$('pbody').innerHTML=h}
 /*NETEND*/
 /*P2P*/
 let p2p=null,remoteApplying=false;
-const ICECFG={iceServers:[{urls:'stun:stun.l.google.com:19302'}]};
+const ICECFG={iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'},{urls:'stun:stun2.l.google.com:19302'}]};
 const mkRoom=()=>{const A='ABCDEFGHJKMNPQRSTUVWXYZ23456789';let s='';for(let i=0;i<4;i++)s+=A[Math.random()*A.length|0];return s};
-async function sigPost(room,msg){try{
+const getLocalMsgs=r=>{try{return JSON.parse(localStorage.getItem('pc:sig:'+r)||'[]')}catch(_){return[]}};
+const putLocalMsg=(r,m)=>{try{const a=getLocalMsgs(r);a.push(typeof m==='string'?m:JSON.stringify(m));localStorage.setItem('pc:sig:'+r,JSON.stringify(a))}catch(_){}};
+async function sigPost(room,msg){
+putLocalMsg(room,msg);
+if(location.protocol.indexOf('http')!=0)return{ok:true,local:true};
+try{
 const r=await fetch('/api/signal',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({room,msg})});
-return await r.json()}catch(e){return null}}
-async function sigGet(room,since){try{
+return await r.json()}catch(e){return{ok:true,local:true}}}
+async function sigGet(room,since){
+let rem=null;
+if(location.protocol.indexOf('http')==0){
+try{
 const r=await fetch('/api/signal?room='+encodeURIComponent(room)+'&since='+since);
-return await r.json()}catch(e){return null}}
+if(r.ok)rem=await r.json();
+else rem={ok:false,err:r.status==404?'offline':'error'};
+}catch(e){rem=null}}
+if(rem&&rem.ok&&rem.msgs&&rem.msgs.length)return rem;
+const loc=getLocalMsgs(room);
+if(loc.length>since)return{ok:true,msgs:loc.slice(since),next:loc.length,local:true};
+return rem||{ok:true,msgs:[],next:since};
+}
 function netSend(o){try{if(p2p&&p2p.dc&&p2p.dc.readyState=='open')p2p.dc.send(JSON.stringify(o))}catch(e){}}
 function netLeave(){try{if(p2p){if(p2p.pollT)clearInterval(p2p.pollT);if(p2p.lostT)clearTimeout(p2p.lostT);
-try{p2p.dc&&p2p.dc.close()}catch(e){}try{p2p.pc&&p2p.pc.close()}catch(e){}}}catch(e){}p2p=null}
+try{p2p.dc&&p2p.dc.close()}catch(e){}try{p2p.pc&&p2p.pc.close()}catch(e){}
+if(p2p.room&&p2p.side=='w'){try{localStorage.removeItem('pc:sig:'+p2p.room)}catch(e){}}}}catch(e){}p2p=null}
 function showNet(msg){scr('s-title',0);scr('s-net',1);blitzLabel();if(msg)$('netmsg').textContent=msg}
 function netMsg(txt){$('netmsg').textContent=txt}
 function blitzLabel(){const t='BLITZ: '+(blitz?blitz+' MIN':'OFF');if($('bz'))$('bz').textContent=t;if($('bz2'))$('bz2').textContent=t}
@@ -1087,9 +1103,10 @@ for(const c of q){try{await p2p.pc.addIceCandidate(c)}catch(e){}}}
 async function hostOffer(){const pc=new RTCPeerConnection(ICECFG);p2p.pc=pc;wirePc(pc);
 const dc=pc.createDataChannel('pc');p2p.dc=dc;wireDc(dc);
 const off=await pc.createOffer();await pc.setLocalDescription(off);
-await sigPost(p2p.room,{t:'offer',from:'h',d:pc.localDescription});
+const r=await sigPost(p2p.room,{t:'offer',from:'h',d:pc.localDescription});
 if(p2p.pollT)clearInterval(p2p.pollT);
-p2p.pollT=setInterval(netPollHost,1500)}
+p2p.pollT=setInterval(netPollHost,1500);
+return r}
 async function netPollHost(){if(!p2p||p2p.connected)return;
 const r=await sigGet(p2p.room,p2p.cursor);if(!r||!r.ok)return;p2p.cursor=r.next;
 for(const m of r.msgs){let g;try{g=JSON.parse(m)}catch(e){continue}
@@ -1097,15 +1114,25 @@ if(g.t=='answer'&&g.from=='g'&&!p2p.answered){p2p.answered=true;
 try{await p2p.pc.setRemoteDescription(g.d);await drainIce()}catch(e){}}
 else if(g.t=='ice'&&g.from=='g'){p2p.iceQ.push(g.d);if(p2p.answered)await drainIce()}}}
 async function netHost(){netLeave();p2p={side:'w',room:mkRoom(),connected:false,cursor:0,iceQ:[],started:false};
+try{localStorage.removeItem('pc:sig:'+p2p.room)}catch(e){}
 showNet('CODE '+p2p.room+' - WAITING FOR FRIEND...');
-try{await hostOffer()}catch(e){netMsg('FAILED TO START - TRY AGAIN')}}
+try{
+const res=await hostOffer();
+if(res&&res.local&&location.protocol=='file:')netMsg('CODE '+p2p.room+' - WAITING (LOCAL CROSS-TAB)');
+}catch(e){netMsg('FAILED TO START - TRY AGAIN')}}
 async function netJoin(room){netLeave();
 room=(room||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,4);
 if(room.length!=4){showNet('ENTER A 4-LETTER CODE');return}
 p2p={side:'b',room,connected:false,cursor:0,iceQ:[],started:false};
 showNet('JOINING '+room+'...');
-for(let i=0;i<20;i++){const r=await sigGet(room,p2p.cursor);if(r&&r.ok&&r.msgs.length)break;
-if(i==19){netMsg('NO SUCH ROOM - CHECK THE CODE');p2p=null;return}
+let storeErr=false;
+for(let i=0;i<20;i++){const r=await sigGet(room,p2p.cursor);
+if(r&&r.ok&&r.msgs.length)break;
+if(r&&r.err=='store unavailable')storeErr=true;
+if(i==19){
+if(storeErr)netMsg('SIGNAL SERVER UNAVAILABLE - CANNOT JOIN');
+else netMsg('NO SUCH ROOM - CHECK THE CODE');
+p2p=null;return}
 await new Promise(r2=>setTimeout(r2,1500))}
 try{await guestAnswer()}catch(e){netMsg('JOIN FAILED - TRY AGAIN');p2p=null}}
 async function guestAnswer(){const pc=new RTCPeerConnection(ICECFG);p2p.pc=pc;wirePc(pc);

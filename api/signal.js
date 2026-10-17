@@ -18,26 +18,42 @@ function validateSignal(m) {
   return null;
 }
 
+const getKvUrl = () => process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL || process.env.REDIS_REST_URL || '';
+const getKvToken = () => process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN || process.env.REDIS_REST_TOKEN || '';
+
 async function kv(path, init) {
-  const r = await fetch(process.env.KV_REST_API_URL + '/' + path, Object.assign(
-    { headers: { Authorization: 'Bearer ' + process.env.KV_REST_API_TOKEN } }, init));
+  const url = getKvUrl(), token = getKvToken();
+  const r = await fetch(url + '/' + path, Object.assign(
+    { headers: { Authorization: 'Bearer ' + token } }, init));
   if (!r.ok) throw new Error('kv ' + r.status);
   return r.json();
 }
 const ip = req => (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || 'unknown';
 
+const memSig = {};
+
 async function handler(req, res) {
   try {
+    const hasKv = !!(getKvUrl() && getKvToken());
     if (req.method === 'GET') {
       const q = req.query || {}, room = String(q.room || '');
       if (!validRoom(room)) return res.status(400).json({ ok: false, err: 'bad room' });
       const since = Math.max(0, parseInt(q.since || '0', 10) || 0);
+      if (!hasKv) {
+        const all = memSig[room] || [];
+        return res.status(200).json({ ok: true, msgs: all.slice(since), next: all.length });
+      }
       const d = await kv('lrange/' + encodeURIComponent(key(room)) + '/' + since + '/-1');
       return res.status(200).json({ ok: true, msgs: d.result || [], next: since + (d.result || []).length });
     }
     if (req.method === 'POST') {
       const err = validateSignal(req.body || {});
       if (err) return res.status(400).json({ ok: false, err });
+      if (!hasKv) {
+        const { room, msg } = req.body;
+        (memSig[room] = memSig[room] || []).push(typeof msg === 'string' ? msg : JSON.stringify(msg));
+        return res.status(200).json({ ok: true });
+      }
       const rl = await kv('incr/pc:rlsig:' + encodeURIComponent(ip(req)));
       await kv('expire/pc:rlsig:' + encodeURIComponent(ip(req)) + '/60');
       if ((rl.result | 0) > 60) return res.status(429).json({ ok: false, err: 'slow down' });
