@@ -94,7 +94,7 @@ The room-code flow is the weakest link. Everything here reuses the existing sign
       capped at 1.8s). The ladder screen shows the last beaten tier, the current one, and the next one
       locked with its "BEAT ..." teaser; records (`rec.eN`), progress (`prof.end`), and snapshots all
       persist, and endless ids never post to world boards. Fixes a latent bug where the NOX unlock was
-      dropped on reload.
+      dropped on reload; veteran saves with a beaten Dune get NOX and tier 1 restored on load.
 - [x] **(S)** Time controls — add increment (3+2, 5+3) and bullet (1 min) to `blitzCycle`; clocks
       already tick correctly, so this is mostly UI + a couple of edge cases in `clockTick`/`flagFall`.
       Shipped: cycle walks OFF → 1 → 3 → 5 → 3+2 → 5+3; Fischer increment added to the mover's clock

@@ -379,6 +379,12 @@ const R = (id, res, o = {}) => Object.assign({ id, res, mate: res !== 'd', plies
   st.d[P.PKEY] = JSON.stringify({ v: 1, unlocked: ['nox', 'e1', 'bogus'], end: 42.7, rec: { e0: { w: 9 }, e7: { w: 2 }, zz: { w: 3 } } });
   const r = P.loadProfile(st);
   eq('endless save is sanitised', [r.unlocked, r.end, Object.keys(r.rec)], [['moss', 'nox'], 42, ['e7']]);
+  st.d[P.PKEY] = JSON.stringify({ v: 1, unlocked: ['moss', 'vex', 'dune'], rec: { moss: { w: 1 }, vex: { w: 1 }, dune: { w: 1, l: 1, d: 0 } } });
+  const v = P.loadProfile(st);
+  eq('veteran saves get NOX and tier 1 back', [v.unlocked, v.end], [['moss', 'vex', 'dune', 'nox'], 1]);
+  st.d[P.PKEY] = JSON.stringify({ v: 1, unlocked: ['moss', 'vex', 'dune'], rec: { dune: { w: 0, l: 2, d: 0 } } });
+  const u = P.loadProfile(st);
+  eq('a Dune loss unlocks nothing', [u.unlocked, u.end], [['moss', 'vex', 'dune'], 0]);
 }
 {
   const st = mem(); let p = P.newProfile();

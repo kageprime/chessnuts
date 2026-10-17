@@ -638,6 +638,8 @@ if(Array.isArray(o.unlocked))for(const id of o.unlocked)if((OPP_ORDER.includes(i
 if(o.rec&&typeof o.rec=='object')for(const id of Object.keys(o.rec)){if(!OPP_ORDER.includes(id)&&!EID.test(id))continue;const r=o.rec[id];if(r&&typeof r=='object')p.rec[id]={w:nn(r.w),l:nn(r.l),d:nn(r.d)}}
 if(o.total&&typeof o.total=='object')p.total={w:nn(o.total.w),l:nn(o.total.l),d:nn(o.total.d)};
 p.streak=nn(o.streak);p.bestStreak=Math.max(nn(o.bestStreak),p.streak);p.xp=nn(o.xp);p.end=Math.min(999,nn(o.end||0));
+/* saves from before the endless ladder: a beaten Dune means the campaign was cleared, so NOX and tier 1 are owed */
+if(p.rec.dune&&p.rec.dune.w>0){if(!p.unlocked.includes('nox'))p.unlocked.push('nox');p.end=Math.max(p.end,1)}
 if(o.puz&&typeof o.puz=='object'){p.puz={streak:nn(o.puz.streak),best:Math.max(nn(o.puz.best),nn(o.puz.streak)),last:typeof o.puz.last=='string'?o.puz.last.slice(0,10):'',wins:nn(o.puz.wins),days:{}};
 if(o.puz.days&&typeof o.puz.days=='object')for(const dn of Object.keys(o.puz.days))if(/^\d{4}-\d{2}-\d{2}$/.test(dn))p.puz.days[dn]=1;
 if(/^\d{4}-\d{2}-\d{2}$/.test(p.puz.last))p.puz.days[p.puz.last]=1;
