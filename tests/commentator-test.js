@@ -80,7 +80,7 @@ const { chromium } = require('playwright');
   await mv('d2', 'd4');
   const replied = await pg.waitForFunction(() => hist.length >= 2, null, { timeout: 6000 }).then(() => true).catch(() => false);
   ok('cpu replies normally during game', replied);
-  const head2 = await pg.evaluate(() => document.getElementById('bt').textContent.length > 3);
+  const head2 = await pg.waitForFunction(() => document.getElementById('bt').textContent.length > 3, null, { timeout: 6000 }).then(() => true).catch(() => false);
   ok('opponent move gets speech headline', head2);
 
   // ---- own blunder in an AI game auto-shows on-board tip without blocking modal ----
