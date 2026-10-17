@@ -84,9 +84,16 @@ The room-code flow is the weakest link. Everything here reuses the existing sign
       practice; keeps streak display but adds history (uses the date-seeded generator, so it works offline).
       Shipped: calendar button beside DAILY PUZZLE, 30-day grid from `prof.puz.days` (capped at 120 keys),
       past days auto-run as practice (no XP, no streak, no history write).
-- [ ] **(M/L)** Endless ladder — after Nox, procedurally unlock rivals: reuse the `OPPS` shape
+- [x] **(M/L)** Endless ladder — after Nox, procedurally unlock rivals: reuse the `OPPS` shape
       (palette + taunts + `sty`), scale engine strength with XP, tease names ahead. Gives the ladder
       an infinite ceiling using systems that already exist.
+      Shipped: clearing the campaign opens tier 1 (`MOSSBACK I`); each win vs the current tier unlocks the
+      next. Tiers recycle the four campaign rivals with roman numerals (base cycle every 4), sharper every
+      cycle (blunder rate down, one search level above base) and a bigger thinking budget (+300ms/cycle,
+      capped at 1.8s). The ladder screen shows the last beaten tier, the current one, and the next one
+      locked with its "BEAT ..." teaser; records (`rec.eN`), progress (`prof.end`), and snapshots all
+      persist, and endless ids never post to world boards. Fixes a latent bug where the NOX unlock was
+      dropped on reload.
 - [x] **(S)** Time controls — add increment (3+2, 5+3) and bullet (1 min) to `blitzCycle`; clocks
       already tick correctly, so this is mostly UI + a couple of edge cases in `clockTick`/`flagFall`.
       Shipped: cycle walks OFF → 1 → 3 → 5 → 3+2 → 5+3; Fischer increment added to the mover's clock

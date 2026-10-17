@@ -2,11 +2,11 @@
   "name": "pixel-chess",
   "version": "1.2.0",
   "private": true,
-  "description": "Pixel Chess - retro pixel-art chess with 3-tier bot ladder, online P2P multiplayer, trophies, and themes",
+  "description": "Pixel Chess - retro pixel-art chess with an endless bot ladder, online P2P multiplayer, trophies, and themes",
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
-    "test": "node tests/engine-test.js && node tests/api-test.js && node tests/p2p-test.js && node tests/server-test.js && node tests/matchmaking-test.js && node tests/sw-test.js && node tests/smoke-test.js && node tests/commentary-test.js && node tests/commentator-test.js && node tests/puzzle-test.js && node tests/blitz-test.js && node tests/trainer-test.js && node tests/ghost-test.js && node tests/startmenu-test.js && node tests/ladder-test.js && node tests/themes-test.js && node tests/layout-test.js",
+    "test": "node tests/engine-test.js && node tests/api-test.js && node tests/p2p-test.js && node tests/server-test.js && node tests/matchmaking-test.js && node tests/sw-test.js && node tests/smoke-test.js && node tests/commentary-test.js && node tests/commentator-test.js && node tests/puzzle-test.js && node tests/blitz-test.js && node tests/trainer-test.js && node tests/ghost-test.js && node tests/startmenu-test.js && node tests/ladder-test.js && node tests/endless-test.js && node tests/themes-test.js && node tests/layout-test.js",
     "test:engine": "node tests/engine-test.js"
   },
   "engines": {

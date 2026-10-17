@@ -231,6 +231,8 @@ button:disabled{opacity:.35;pointer-events:none}
 #bt.idle{opacity:.5}
 #oq{text-align:center!important;font-size:8px!important;opacity:.85;margin:0 0 12px!important}
 #s-opp h2{font-size:14px;margin:0 0 10px;text-shadow:2px 2px 0 var(--accent)}
+/* endless ladders add cards: keep the screen centered when they fit, scrollable when they do not */
+#s-opp{overflow-y:auto}#s-opp h2{margin-top:auto}#s-opp .row{margin-bottom:auto}
 #ol{display:flex;flex-direction:column;align-items:center}
 .oc{display:flex;align-items:center;gap:12px;width:min(88vw,330px);margin:10px 0;padding:10px;text-align:left}
 .oc canvas{width:48px;height:48px;margin:0;flex:none;box-shadow:0 0 0 2px var(--edge)}
@@ -278,7 +280,7 @@ button:disabled{opacity:.35;pointer-events:none}
 .m-subrow .sm-mm .mi{font-size:10px;width:auto;margin-right:4px}
 .m-subrow .sm-mm .mtx{flex:none}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
-@media (max-height:520px){#ol{flex-direction:row}.oc{flex-direction:column;width:150px;margin:6px 8px;text-align:center}.oc canvas{width:40px;height:40px}.ot{align-items:center}#s-opp h2{margin:0 0 4px}}
+@media (max-height:520px){#ol{flex-direction:row;flex-wrap:wrap;justify-content:center}.oc{flex-direction:column;width:150px;margin:6px 8px;text-align:center}.oc canvas{width:40px;height:40px}.ot{align-items:center}#s-opp h2{margin:0 0 4px}}
 /* wide screens: board on the left, info panel on the right */
 #app.on.wd{top:50%;bottom:auto;transform:translateY(-50%);height:var(--bh,640px);padding:0 var(--padh,28px);display:grid;grid-template-columns:auto var(--pw,460px);grid-template-rows:auto auto auto minmax(0,1fr) auto;column-gap:var(--cg,48px);row-gap:var(--rg,20px);justify-content:center;align-items:stretch;justify-items:stretch}
 .wd #bw{grid-column:1;grid-row:1/6;margin:0;align-self:center}
@@ -294,7 +296,7 @@ button:disabled{opacity:.35;pointer-events:none}
 .wd .bub{font-size:calc(11px*var(--fs,1));line-height:1.7;min-height:calc(88px*var(--fs,1));height:auto;padding:16px 18px}
 .wd .rib{display:grid;grid-template-columns:calc(44px*var(--fs,1)) 1fr 1fr;align-content:start;gap:8px 0;height:auto;min-height:0;white-space:normal;overflow-x:hidden;overflow-y:auto;padding:14px 16px;font-size:calc(11px*var(--fs,1));line-height:1.6;scrollbar-width:thin}
 .wd .rib span{margin:0}.wd .rib .cur{margin:0 6px 0 -3px;justify-self:start}.wd .rib .em{grid-column:1/-1}
-@media (min-width:1000px) and (min-height:700px){#ol{flex-direction:row;gap:28px}.oc{flex-direction:column;width:280px;margin:14px;padding:22px;text-align:center}.oc canvas{width:112px;height:112px}.ot{align-items:center;gap:10px}.ot b{font-size:14px}.ot i{font-size:8px}.ot u{font-size:9px}#s-opp h2{font-size:20px;margin-bottom:20px}}
+@media (min-width:1000px) and (min-height:700px){#ol{flex-direction:row;flex-wrap:wrap;justify-content:center;gap:28px}.oc{flex-direction:column;width:280px;margin:14px;padding:22px;text-align:center}.oc canvas{width:112px;height:112px}.ot{align-items:center;gap:10px}.ot b{font-size:14px}.ot i{font-size:8px}.ot u{font-size:9px}#s-opp h2{font-size:20px;margin-bottom:20px}}
 @keyframes bl{50%{opacity:0}}
 @keyframes dt{0%{content:'.'}33%{content:'..'}66%{content:'...'}}
 @keyframes hp{50%{transform:translateY(-3px)}}
@@ -596,7 +598,7 @@ const mkInitials=(name)=>{name=String(name||'').toUpperCase().replace(/[^A-Z0-9 
 let s=name.split(/\s+/).map(w=>w[0]).join('');const w0=s;
 if(s.length<3){const flat=name.replace(/\s+/g,'');for(const ch of flat){if(s.length>=3)break;if(!s.includes(ch))s+=ch}
 while(s.length<3)s+=w0[s.length%w0.length]}return s.slice(0,3)};
-const newProfile=()=>({v:1,hd:1,unlocked:['moss'],rec:{},streak:0,bestStreak:0,games:[],total:{w:0,l:0,d:0},theme:{board:'scene',piece:'classic'},top:{fast:{},mate:{},streaks:[]},vol:.7,puz:{streak:0,best:0,last:'',wins:0,days:{}},trn:{last:'',best:0,wins:0},xp:0,name:'YOU',cmt:0,crt:1,pid:mkPid(),elo:1000,initials:'',fin:{eq:{P:'base',N:'base',B:'base',R:'base',Q:'base',K:'base'}}});
+const newProfile=()=>({v:1,hd:1,unlocked:['moss'],rec:{},streak:0,bestStreak:0,games:[],total:{w:0,l:0,d:0},theme:{board:'scene',piece:'classic'},top:{fast:{},mate:{},streaks:[]},vol:.7,puz:{streak:0,best:0,last:'',wins:0,days:{}},trn:{last:'',best:0,wins:0},end:0,xp:0,name:'YOU',cmt:0,crt:1,pid:mkPid(),elo:1000,initials:'',fin:{eq:{P:'base',N:'base',B:'base',R:'base',Q:'base',K:'base'}}});
 const nn=(x,d=0)=>Number.isFinite(x)&&x>=0?Math.floor(x):d;
 const LESS={fast:(e,x)=>e.ms<x.ms,mate:(e,x)=>e.moves<x.moves||(e.moves==x.moves&&e.ms<x.ms),streaks:(e,x)=>e.n>x.n};
 /* insert into a top list (best first, max TOPN). Returns the 1-based rank, or 0 if it did not make the list. */
@@ -614,6 +616,16 @@ if(q.clear)return !!(p.rec.dune&&p.rec.dune.w>0);return false}
 function finKeys(p){const o=[];for(const t in FIN_REQ)if(finUnlocked(p,t))o.push(t);return o}
 function setFin(p,t,id){if(id!='base'&&!finUnlocked(p,t))return false;p.fin.eq[t]=id=='alt'?'alt':'base';return true}
 const finReqText=q=>!q?'':q.beat?'BEAT '+OPPS[OPP_ORDER.indexOf(q.beat)].name:q.streak?q.streak+' WIN STREAK':'CLEAR THE LADDER';
+/* endless ladder: procedural rivals past the campaign */
+const EID=/^e([1-9]\d{0,2})$/,ROMAN=[[1000,'M'],[900,'CM'],[500,'D'],[400,'CD'],[100,'C'],[90,'XC'],[50,'L'],[40,'XL'],[10,'X'],[9,'IX'],[5,'V'],[4,'IV'],[1,'I']];
+function romanNum(n){n=Math.max(1,Math.min(999,n|0));let s='';for(const[v,r]of ROMAN)while(n>=v){s+=r;n-=v}return s}
+/* tier n recycles a campaign rival: same look and voice, sharper each cycle, bigger thinking budget */
+function endOpp(n){n=Math.max(1,Math.min(999,n|0));const base=OPPS[(n-1)%OPPS.length],cyc=(n-1)/OPPS.length|0;
+return{id:'e'+n,name:base.name+' '+romanNum(n),tag:base.tag,lv:'TIER '+n,lvl:Math.max(1,base.lvl),p:{bl:Math.max(0,(base.p.bl||0)-cyc*.03),a:base.p.a||0,c:base.p.c||0},sty:base.sty,pal:base.pal,say:base.say,endless:true,ms:Math.min(1800,(base.lvl>=2?900:260)+cyc*300)}}
+function oppById(id){const k=OPPS.findIndex(x=>x.id===id);if(k>=0)return OPPS[k];const m=EID.exec(id||'');return m?endOpp(+m[1]):null}
+/* next rival after a win: campaign order, then NOX, then the endless tier you are on */
+function nextOpp(id){const k=OPPS.findIndex(x=>x.id===id);if(k>=0)return OPPS[k+1]||((prof.end|0)>0?endOpp(prof.end):null);
+return EID.test(id||'')&&(prof.end|0)>0?endOpp(prof.end):null}
 function cleanTop(a,kind){if(!Array.isArray(a))return[];const o=[];
 for(const e of a){if(!e||typeof e!='object')continue;
 if(kind=='fast'&&Number.isFinite(e.ms)&&e.ms>0)o.push({ms:Math.floor(e.ms),plies:nn(e.plies),undos:nn(e.undos),date:nn(e.date)});
@@ -622,10 +634,10 @@ if(kind=='streaks'&&Number.isFinite(e.n)&&e.n>=1)o.push({n:Math.floor(e.n),date:
 const L=[];for(const e of o)ins(L,e,LESS[kind]);return L}
 function loadProfile(st){const p=newProfile();let o=null;try{const t=st&&st.getItem(PKEY);if(t)o=JSON.parse(t)}catch(e){}
 if(!o||typeof o!='object'||o.v!==1)return p;
-if(Array.isArray(o.unlocked))for(const id of o.unlocked)if(OPP_ORDER.includes(id)&&!p.unlocked.includes(id))p.unlocked.push(id);
-if(o.rec&&typeof o.rec=='object')for(const id of OPP_ORDER){const r=o.rec[id];if(r&&typeof r=='object')p.rec[id]={w:nn(r.w),l:nn(r.l),d:nn(r.d)}}
+if(Array.isArray(o.unlocked))for(const id of o.unlocked)if((OPP_ORDER.includes(id)||id=='nox')&&!p.unlocked.includes(id))p.unlocked.push(id);
+if(o.rec&&typeof o.rec=='object')for(const id of Object.keys(o.rec)){if(!OPP_ORDER.includes(id)&&!EID.test(id))continue;const r=o.rec[id];if(r&&typeof r=='object')p.rec[id]={w:nn(r.w),l:nn(r.l),d:nn(r.d)}}
 if(o.total&&typeof o.total=='object')p.total={w:nn(o.total.w),l:nn(o.total.l),d:nn(o.total.d)};
-p.streak=nn(o.streak);p.bestStreak=Math.max(nn(o.bestStreak),p.streak);p.xp=nn(o.xp);
+p.streak=nn(o.streak);p.bestStreak=Math.max(nn(o.bestStreak),p.streak);p.xp=nn(o.xp);p.end=Math.min(999,nn(o.end||0));
 if(o.puz&&typeof o.puz=='object'){p.puz={streak:nn(o.puz.streak),best:Math.max(nn(o.puz.best),nn(o.puz.streak)),last:typeof o.puz.last=='string'?o.puz.last.slice(0,10):'',wins:nn(o.puz.wins),days:{}};
 if(o.puz.days&&typeof o.puz.days=='object')for(const dn of Object.keys(o.puz.days))if(/^\d{4}-\d{2}-\d{2}$/.test(dn))p.puz.days[dn]=1;
 if(/^\d{4}-\d{2}-\d{2}$/.test(p.puz.last))p.puz.days[p.puz.last]=1;
@@ -633,7 +645,7 @@ const dks=Object.keys(p.puz.days);if(dks.length>120){dks.sort();for(let di=0;di<
 const otr=o.trn&&typeof o.trn=='object'?o.trn:{};
 p.trn={last:typeof otr.last=='string'?otr.last.slice(0,10):'',best:nn(otr.best),wins:nn(otr.wins)};
 for(const t of['P','N','B','R','Q','K'])p.fin.eq[t]=(o.fin&&o.fin.eq&&o.fin.eq[t]=='alt'&&finUnlocked(p,t))?'alt':'base';
-if(Array.isArray(o.games))p.games=o.games.filter(g=>g&&typeof g=='object'&&OPP_ORDER.includes(g.id)&&'wld'.includes(g.res)).slice(0,100);
+if(Array.isArray(o.games))p.games=o.games.filter(g=>g&&typeof g=='object'&&(OPP_ORDER.includes(g.id)||EID.test(g.id))&&'wld'.includes(g.res)).slice(0,100);
 if(o.top&&typeof o.top=='object'){for(const id of OPP_ORDER){const f=cleanTop(o.top.fast&&o.top.fast[id],'fast'),m=cleanTop(o.top.mate&&o.top.mate[id],'mate');if(f.length)p.top.fast[id]=f;if(m.length)p.top.mate[id]=m}
 p.top.streaks=cleanTop(o.top.streaks,'streaks')}
 else{ /* save from before the leaderboards: rebuild what the game history still knows */
@@ -662,17 +674,20 @@ const xpTitle=x=>{let t=RANKS[0][1];for(const[m,n]of RANKS)if(x>=m)t=n;return t}
 function recordResult(p,r){const before=themeKeys(p);const finBefore=finKeys(p);const rc=p.rec[r.id]||(p.rec[r.id]={w:0,l:0,d:0});rc[r.res]++;p.total[r.res]++;
 const oldRank=xpTitle(p.xp||0);
 p.xp=(p.xp||0)+(r.res=='w'?100:r.res=='d'?30:10);
-const out={unlocked:null,cleared:false,bonus:null,rankUp:null,streakFiled:0,newBest:[],ranks:{time:0,moves:0},themes:[],finishers:[]};
+const out={unlocked:null,cleared:false,bonus:null,endless:0,endlessOpen:false,rankUp:null,streakFiled:0,newBest:[],ranks:{time:0,moves:0},themes:[],finishers:[]};
 if(xpTitle(p.xp)!=oldRank)out.rankUp=xpTitle(p.xp);
 if(r.res=='w'){p.streak++;if(p.streak>p.bestStreak)p.bestStreak=p.streak;
-const i=OPP_ORDER.indexOf(r.id),nx=OPP_ORDER[i+1];
+const i=OPP_ORDER.indexOf(r.id),nx=i>=0?OPP_ORDER[i+1]:null;
 if(nx&&!p.unlocked.includes(nx)){p.unlocked.push(nx);out.unlocked=nx}
 if(i==OPP_ORDER.length-1&&rc.w==1)out.cleared=true;
-if(out.cleared&&!p.unlocked.includes('nox')){p.unlocked.push('nox');out.bonus='nox'}
-const mv=Math.max(1,Math.ceil(r.plies/2)),T=p.top;
+if(out.cleared){if(!p.unlocked.includes('nox')){p.unlocked.push('nox');out.bonus='nox'}
+if(!(p.end|0)){p.end=1;out.endlessOpen=true}}
+const em=EID.exec(r.id);
+if(em){const n=+em[1];if(n==(p.end|0)){p.end=n+1;out.endless=n}}
+else{const mv=Math.max(1,Math.ceil(r.plies/2)),T=p.top;
 if(r.mate)out.ranks.moves=ins(T.mate[r.id]||(T.mate[r.id]=[]),{moves:mv,ms:r.ms,undos:r.undos,date:r.date},LESS.mate);
 if(mv>=MIN_FAST&&r.ms>0)out.ranks.time=ins(T.fast[r.id]||(T.fast[r.id]=[]),{ms:r.ms,plies:r.plies,undos:r.undos,date:r.date},LESS.fast);
-if(out.ranks.moves==1)out.newBest.push('moves');if(out.ranks.time==1)out.newBest.push('time')}
+if(out.ranks.moves==1)out.newBest.push('moves');if(out.ranks.time==1)out.newBest.push('time')}}
 else if(r.res=='l'){out.streakFiled=p.streak;if(p.streak>0)ins(p.top.streaks,{n:p.streak,date:r.date},LESS.streaks);p.streak=0}
 p.games.unshift({id:r.id,res:r.res,plies:r.plies,ms:r.ms,caps:r.caps,left:r.left,undos:r.undos,date:r.date,san:r.san});
 if(p.games.length>100)p.games.length=100;
@@ -1720,7 +1735,7 @@ function aiMove(){if(over||an||sa||turn!='b'||!inGame)return;if(paused||cmtOn())
 const id=++reqId,g=gid,t0=performance.now();
 const done=m=>{if(id!==reqId||g!==gid||!inGame||over||turn!='b'||!m)return;
 setTimeout(()=>{if(id!==reqId||g!==gid||over)return;if(paused||cmtOn()){aiPend=m;return}play(...m)},Math.max(0,360-(performance.now()-t0)))};
-if(wk){wkCb=done;wk.postMessage({id,rows:b.map(r=>r.slice()),cr:b.cr,ep:b.ep,lvl:opp.lvl,pers:opp.p})}else setTimeout(()=>done(pick(b,opp.lvl,'b',0,opp.p)),30)}
+if(wk){wkCb=done;wk.postMessage({id,rows:b.map(r=>r.slice()),cr:b.cr,ep:b.ep,lvl:opp.lvl,pers:opp.p,ms:opp.ms||0})}else setTimeout(()=>done(pick(b,opp.lvl,'b',opp.ms||0,opp.p)),30)}
 function play(r,c,y,x,promo,dp){const p=b[r][c],cap=b[y][x],epc=p[1]=='P'&&c!=x&&!cap,hit=!!(cap||epc);sel=null;moves=[];drag=null;
 const fin=()=>commit(r,c,y,x,promo||'Q',hit);
 if(!fx){sfx(hit?'thud':'move');fin();return}
@@ -2547,6 +2562,8 @@ if(lastOut.res=='w'){L.push('WIN STREAK: '+prof.streak+' (BEST '+prof.bestStreak
 if(o.unlocked){unl=OPPS[OPP_ORDER.indexOf(o.unlocked)];L.push('NEW OPPONENT: '+unl.name+'!')}
 else if(o.cleared)L.push('LADDER CLEARED!');
 if(o.bonus){unl=OPPS.find(x=>x.id==o.bonus);L.push('SECRET OPPONENT: '+unl.name+'!')}
+if(o.endlessOpen)L.push('ENDLESS LADDER OPEN: '+endOpp(1).name+' AWAITS!');
+if(o.endless){unl=endOpp(o.endless+1);L.push('ENDLESS TIER '+o.endless+' CLEARED! NEW RIVAL: '+unl.name+'!')}
 if(o.ranks.moves==1)L.push('NEW BEST: FEWEST MOVES');else if(o.ranks.moves)L.push('TOP 5 FEWEST MOVES: #'+o.ranks.moves);
 if(o.ranks.time==1)L.push('NEW BEST: FASTEST WIN');else if(o.ranks.time)L.push('TOP 5 FASTEST WIN: #'+o.ranks.time);
 if(o.rankUp)L.push('NEW RANK: '+o.rankUp);
@@ -3001,7 +3018,16 @@ const tx=document.createElement('span');tx.className='ot';
 const em=open?(r.w+r.l+r.d?'W'+r.w+' L'+r.l+' D'+r.d+(r.w?' - BEATEN':''):'NOT PLAYED YET'):(exh?'LOCKED - EXHIBITION':'LOCKED - BEAT '+OPPS[i-1].name);
 tx.innerHTML='<b>'+o.name+'</b><i>'+o.tag+'</i><u>'+o.lv+'</u><em>'+em+'</em>';bt.append(cn,tx);
 bt.onclick=()=>{if(!can)return;scr('s-opp',0);startGame(1,o,exh||!open)};L.appendChild(bt)});
-$('osm').textContent=(exh?'EXHIBITION - NOT COUNTED, UNLIMITED UNDO':'LADDER - 3 UNDOS PER GAME')+' | STREAK '+prof.streak+' BEST '+prof.bestStreak+(store?'':' | PROGRESS NOT SAVED ON THIS DEVICE');
+const end=prof.end|0;
+if(end>0){const hd=document.createElement('div');hd.className='lab';hd.textContent='ENDLESS LADDER - TIER '+end;L.appendChild(hd);
+for(let n=Math.max(1,end-1);n<=end+1;n++){const o=endOpp(n),open=n<=end,r=prof.rec[o.id]||{w:0,l:0,d:0};
+const bt=document.createElement('button');bt.className='oc'+(open?'':' lk');bt.setAttribute('aria-disabled',open?'false':'true');
+const cn=document.createElement('canvas');cn.width=cn.height=96;portrait(cn.getContext('2d'),o,'h',false);
+const tx=document.createElement('span');tx.className='ot';
+const em=open?(r.w+r.l+r.d?(n<end?'BEATEN':'CURRENT')+' - W'+r.w+' L'+r.l+' D'+r.d:'NOT PLAYED YET'):'LOCKED - BEAT '+endOpp(n-1).name;
+tx.innerHTML='<b>'+o.name+'</b><i>'+o.tag+'</i><u>'+o.lv+'</u><em>'+em+'</em>';bt.append(cn,tx);
+bt.onclick=()=>{if(!open)return;scr('s-opp',0);startGame(1,o,false)};L.appendChild(bt)}}
+$('osm').textContent=(exh?'EXHIBITION - NOT COUNTED, UNLIMITED UNDO':'LADDER - 3 UNDOS PER GAME')+' | STREAK '+prof.streak+' BEST '+prof.bestStreak+(end>0?' | ENDLESS TIER '+end:'')+(store?'':' | PROGRESS NOT SAVED ON THIS DEVICE');
 $('ex').textContent='EXHIBITION: '+(exh?'ON':'OFF')}
 /* ---- themes and profile screens ---- */
 const reqText=q=>!q?'':q.beat?'BEAT '+OPPS[OPP_ORDER.indexOf(q.beat)].name:q.streak+' WIN STREAK';
@@ -3033,7 +3059,10 @@ PTABS.forEach((n,i)=>{const bt=document.createElement('button');bt.className='sm
 let h='';const t=prof.total;
 if(pfTab==0){h+='<div class="px ps"><h3>ALL LADDER GAMES</h3>'+lnRow('WINS / LOSSES / DRAWS',t.w+' / '+t.l+' / '+t.d)+lnRow('WIN STREAK NOW',prof.streak)+lnRow('BEST WIN STREAK',prof.bestStreak)+lnRow('RANK',xpTitle(prof.xp||0)+' - '+(prof.xp||0)+' XP')+lnRow('PUZZLE STREAK',prof.puz.streak+' (BEST '+prof.puz.best+')')+'</div>';
 h+='<div class="px ps"><h3>BY OPPONENT</h3>';
-for(const o of OPPS){if(!isUnlocked(prof,o.id)){h+=lnRow('???','LOCKED');continue}const r=prof.rec[o.id]||{w:0,l:0,d:0};h+=lnRow(o.name,'W'+r.w+' L'+r.l+' D'+r.d)}h+='</div>';
+for(const o of OPPS){if(!isUnlocked(prof,o.id)){h+=lnRow('???','LOCKED');continue}const r=prof.rec[o.id]||{w:0,l:0,d:0};h+=lnRow(o.name,'W'+r.w+' L'+r.l+' D'+r.d)}
+if((prof.end|0)>0){let ew=0,el=0,ed=0;for(const id in prof.rec)if(EID.test(id)){const r=prof.rec[id];ew+=r.w;el+=r.l;ed+=r.d}
+h+=lnRow('ENDLESS TIERS BEATEN',Math.max(0,(prof.end|0)-1))+lnRow('ENDLESS RIVALS','W'+ew+' L'+el+' D'+ed)}
+h+='</div>';
 h+='<div class="px ps"><h3>WORLD BOARD NAME</h3><div class="ln"><span>NAME</span><span><input id="pfname" maxlength="12" value="'+prof.name+'"></span></div><div class="ln"><span>INITIALS</span><span><input id="pfini" maxlength="3" value="'+(prof.initials||mkInitials(prof.name))+'"></span></div></div>'}
 else if(pfTab==1){const L=streakBoard(prof);h+='<div class="px ps"><h3>BEST WIN STREAKS</h3>';
 if(!L.length)h+='<div class="ln"><span>NO STREAKS YET - WIN A LADDER GAME</span></div>';
@@ -3072,7 +3101,7 @@ const f=[...v.querySelectorAll('.tm')].filter(x=>!x.hidden&&x.offsetParent!==nul
 $('onl').onclick=()=>showNet();$('netb').onclick=()=>{netLeave();scr('s-net',0);scr('s-title',1);foc('onl')};
 $('neth').onclick=()=>netHost();$('netj').onclick=()=>netJoin($('netcode').value);$('netq').onclick=()=>netQuick();$('netshare').onclick=()=>netShare();$('bz2').onclick=blitzCycle;
 document.querySelectorAll('#emo [data-em]').forEach(b=>b.onclick=()=>emote(b.getAttribute('data-em')));
-$('ob').onclick=()=>{scr('s-opp',0);scr('s-title',1);foc('shPlay')};$('ex').onclick=()=>{exh=!exh;renderOpp()};$('bz').onclick=blitzCycle;$('nx').onclick=()=>{const o=OPPS[OPP_ORDER.indexOf(opp.id)+1];if(o)startGame(1,o,false)};$('sh').onclick=()=>shareCard();
+$('ob').onclick=()=>{scr('s-opp',0);scr('s-title',1);foc('shPlay')};$('ex').onclick=()=>{exh=!exh;renderOpp()};$('bz').onclick=blitzCycle;$('nx').onclick=()=>{const o=nextOpp(opp.id);if(o)startGame(1,o,false)};$('sh').onclick=()=>shareCard();
 Q('.tlvl').forEach(e=>e.onclick=()=>{lvl=(lvl+1)%3;Q('.tlvl').forEach(x=>x.textContent='CPU: '+['EASY','NORMAL','HARD'][lvl])});
 /* settings: shared between the title menu switches and the pause-screen buttons */
 function syncToggles(){Q('.tsnd').forEach(x=>x.textContent=snd?'SND ON':'SND OFF');Q('.tfx').forEach(x=>x.textContent=fx?'FX ON':'FX OFF');
@@ -3177,7 +3206,7 @@ nox:{board:{d:['#241640','#2e1c55','#180e30','#2a1a4e','#1e1238'],l:['#6a5a9a','
  const X=Math.round(q.x),Y=Math.round(q.y);bx.fillStyle=Math.sin(bgT*.15+q.ph)>0?'#7ff0ff':'#4a3a8a';bx.fillRect(X,Y,1,1)}}}};
 let scn=null,scP=0,scS=[],scCl=[],scStar=[];
 const SCP=()=>Math.round(Math.min(1,hist.length/80)*8)/8;
-function sceneSet(){scn=ai&&inGame?opp.id:null;mkbg(boardCols());bgBuild();bgTick();if(scn)musStart(scn);else musStop(true)}
+function sceneSet(){scn=ai&&inGame?(opp.sty||opp.id):null;mkbg(boardCols());bgBuild();bgTick();if(scn)musStart(scn);else musStop(true)}
 function sceneUpdate(){if(scn&&SCP()!=scP){bgBuild();bgTick()}}
 for(const n of['move','undo','newgame'])BUS.on(n,sceneUpdate);
 function sceneBuild(w,h){const S=SCENES[scn],p=scP=SCP();bgBase=document.createElement('canvas');bgBase.width=w;bgBase.height=h;const g=bgBase.getContext('2d'),im=g.createImageData(w,h);
@@ -3404,7 +3433,7 @@ function shValid(s){
   if(!s.b||!Array.isArray(s.b.g)||s.b.g.length!==8||!s.b.g.every(function(r){return Array.isArray(r)&&r.length===8}))return null;
   if(!s.b.cr)return null;
   if(!Array.isArray(s.hist))return null;
-  if(s.ai&&(typeof s.oppId!=='string'||!OPPS.some(function(o){return o.id===s.oppId})))return null;
+  if(s.ai&&!oppById(s.oppId))return null;
   return s;
  }catch(e){return null}
 }
@@ -3412,7 +3441,7 @@ function shRestore(){
  var rec=null;try{rec=ArcadeShell.load('chess')}catch(e){}
  var s=rec&&shValid(rec.state);if(!s)return false;
  au();netLeave();
- ai=!!s.ai;opp=s.ai?(OPPS.find(function(o){return o.id===s.oppId})||OPPS[0]):OPPS[0];exh=!!s.exh;
+ ai=!!s.ai;opp=s.ai?(oppById(s.oppId)||OPPS[0]):OPPS[0];exh=!!s.exh;
  gmode=s.gmode;lvl=s.lvl|0;blitz=s.blitz|0;blitzInc=Math.max(0,s.inc|0);CLK={w:Math.max(0,s.cw|0),b:Math.max(0,s.cb|0)};clkT0=Date.now();
  undosLeft=Math.max(0,s.undos|0);recorded=false;lastOut=null;t0g=Date.now();pausedMs=0;
  b=shUnboards(s.b);turn=s.turn;

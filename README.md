@@ -3,7 +3,7 @@
 Standalone retro pixel-art chess game.
 
 ## Features
-- **3-Tier AI Bot Ladder**: Challenge Mossback, Lady Vex, and Old Dune with dynamic tutor dialogue.
+- **Endless AI Ladder**: Challenge Mossback, Lady Vex, Old Dune, and the secret NOX with dynamic tutor dialogue — then keep climbing: every rival you beat past the campaign returns as a harder, roman-numbered tier with a bigger thinking budget.
 - **Online Multiplayer**: One-tap quick match with XP-based pairing, shareable challenge links, in-game emotes, online Elo ratings, real-time peer-to-peer WebRTC, and cross-tab offline play.
 - **Tactical Analytics**: Daily Puzzle with a 30-day archive (past days replay as no-XP practice), Mistake Trainer (drills from your worst moves, +5 XP each once a day), Puzzle Survival mode, Game Review & Accuracy Report Card, Opening Banners, and Eval Gauge.
 - **Ghost Replays**: World-board records keep the record holder's full game; "RACE THE GHOST" shadows their moves on your board while you try to mate faster.

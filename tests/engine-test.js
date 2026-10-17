@@ -243,7 +243,7 @@ eq('queen attacked by a defended bishop trembles', T('4k3/8/8/3q4/8/5B2/8/4K3 b 
 eq('kings never tremble', T('4k3/8/8/8/8/8/4q3/4K3 w - -').includes('7,4'), false);
 
 // --- profile / ladder rules ---
-const P = new Function(html.split('/*PROF*/')[1].split('/*PROFEND*/')[0] + ';return{loadProfile,saveProfile,recordResult,newProfile,isUnlocked,PKEY,themeUnlocked,setTheme,streakBoard,MIN_FAST,THEME_REQ,xpTitle,mkInitials,finUnlocked,setFin,finKeys,FIN_REQ}')();
+const P = new Function(html.split('/*PROF*/')[1].split('/*PROFEND*/')[0] + ';return{loadProfile,saveProfile,recordResult,newProfile,isUnlocked,PKEY,themeUnlocked,setTheme,streakBoard,MIN_FAST,THEME_REQ,xpTitle,mkInitials,finUnlocked,setFin,finKeys,FIN_REQ,romanNum,EID}')();
 const mem = () => { const d = {}; return { getItem: k => (k in d ? d[k] : null), setItem: (k, v) => { d[k] = String(v); }, d }; };
 const R = (id, res, o = {}) => Object.assign({ id, res, mate: res !== 'd', plies: 41, ms: 90000, caps: 3, left: 9, undos: 0, san: 'e4', date: 1 }, o);
 {
@@ -349,6 +349,36 @@ const R = (id, res, o = {}) => Object.assign({ id, res, mate: res !== 'd', plies
   for (let i = 0; i < 120; i++) P.recordResult(p, R('moss', 'w'));
   eq('game history capped at 100', p.games.length, 100);
   eq('history keeps the move list', typeof p.games[0].san, 'string');
+}
+// --- endless ladder ---
+{
+  eq('roman numerals', [P.romanNum(1), P.romanNum(4), P.romanNum(9), P.romanNum(58), P.romanNum(999), P.romanNum(0)], ['I', 'IV', 'IX', 'LVIII', 'CMXCIX', 'I']);
+  eq('endless id shape', [P.EID.test('e1'), P.EID.test('e999'), P.EID.test('e0'), P.EID.test('e1000'), P.EID.test('nox')], [true, true, false, false, false]);
+  const p = P.newProfile();
+  eq('fresh profile: endless locked', p.end, 0);
+  P.recordResult(p, R('moss', 'w')); P.recordResult(p, R('vex', 'w'));
+  let o = P.recordResult(p, R('dune', 'w'));
+  eq('clearing opens endless tier 1', [o.cleared, o.endlessOpen, p.end], [true, true, 1]);
+  o = P.recordResult(p, R('dune', 'w'));
+  eq('endless opens only once', [o.cleared, o.endlessOpen, p.end], [false, false, 1]);
+  o = P.recordResult(p, R('e1', 'w'));
+  eq('beating tier 1 unlocks tier 2', [o.endless, p.end, o.ranks], [1, 2, { time: 0, moves: 0 }]);
+  eq('endless wins stay out of the world-board tops', [p.top.fast.e1, p.top.mate.e1], [undefined, undefined]);
+  o = P.recordResult(p, R('e1', 'w'));
+  eq('replaying a beaten tier advances nothing', [o.endless, p.end], [0, 2]);
+  P.recordResult(p, R('e2', 'l'));
+  eq('losing to the current tier keeps it', [p.end, p.rec.e2.l], [2, 1]);
+  o = P.recordResult(p, R('e2', 'w'));
+  eq('beating the current tier advances', [o.endless, p.end], [2, 3]);
+  o = P.recordResult(p, R('e99', 'w'));
+  eq('beating a future tier advances nothing', [o.endless, p.end], [0, 3]);
+  const st = mem();
+  P.saveProfile(st, p);
+  const q = P.loadProfile(st);
+  eq('endless progress survives a reload', [q.end, q.rec.e2, q.games.some(g => g.id === 'e1')], [3, { w: 1, l: 1, d: 0 }, true]);
+  st.d[P.PKEY] = JSON.stringify({ v: 1, unlocked: ['nox', 'e1', 'bogus'], end: 42.7, rec: { e0: { w: 9 }, e7: { w: 2 }, zz: { w: 3 } } });
+  const r = P.loadProfile(st);
+  eq('endless save is sanitised', [r.unlocked, r.end, Object.keys(r.rec)], [['moss', 'nox'], 42, ['e7']]);
 }
 {
   const st = mem(); let p = P.newProfile();
