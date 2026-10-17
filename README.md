@@ -5,7 +5,7 @@ Standalone retro pixel-art chess game.
 ## Features
 - **3-Tier AI Bot Ladder**: Challenge Mossback, Lady Vex, and Old Dune with dynamic tutor dialogue.
 - **Online Multiplayer**: One-tap quick match with XP-based pairing, shareable challenge links, in-game emotes, online Elo ratings, real-time peer-to-peer WebRTC, and cross-tab offline play.
-- **Tactical Analytics**: Puzzle Survival mode, Game Review & Accuracy Report Card, Opening Banners, and Eval Gauge.
+- **Tactical Analytics**: Daily Puzzle with a 30-day archive (past days replay as no-XP practice), Puzzle Survival mode, Game Review & Accuracy Report Card, Opening Banners, and Eval Gauge.
 - **Unlockable Retro Themes**: Boards (Midnight, Candy, Glacier, Ember) and pieces (Jade, Gold, Neon).
 - **Console Trophies**: 12 declarative achievements with XP awards.
 - **Offline / PWA Ready**: `sw.js` caches the app shell, so the game installs and plays offline; 100% playable directly in a browser with no server dependencies.

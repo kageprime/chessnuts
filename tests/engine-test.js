@@ -94,7 +94,7 @@ for (const [id, M] of Object.entries(MU.MUS)) {
 }
 
 // --- daily puzzles: every entry is a genuine mate-in-1 with no king captures ---
-const ZB = new Function('const BUS={on(){}};' + html.split('/*PUZ*/')[1].split('/*PUZEND*/')[0] + ';return{PUZ,fenParse,recordPuzzle,puzIdx,puzStamp}')();
+const ZB = new Function('const BUS={on(){}};' + html.split('/*PUZ*/')[1].split('/*PUZEND*/')[0] + ';return{PUZ,fenParse,recordPuzzle,puzIdx,puzStamp,puzTrim,puzArchiveView}')();
 eq('puzzles: 27 entries', ZB.PUZ.length, 27);
 {
   const bad = [];
@@ -129,6 +129,21 @@ eq('puzzles: 27 entries', ZB.PUZ.length, 27);
   ZB.recordPuzzle(qp, '2026-10-10', true);
   eq('puzzle solve gives 25 XP', qp.xp, 25);
   eq('stamps by solve time', [ZB.puzStamp(12), ZB.puzStamp(29), ZB.puzStamp(30), ZB.puzStamp(119), ZB.puzStamp(120), ZB.puzStamp(600)], ['TIMER LORD', 'TIMER LORD', 'ADEPT', 'ADEPT', 'GRINDER', 'GRINDER']);
+}
+{
+  // archive: day history, trim, and the 30-day grid view
+  const hp = { puz: { streak: 0, best: 0, last: '', wins: 0 } };
+  ZB.recordPuzzle(hp, '2026-10-10', true);
+  eq('puzzle: solve lands in day history', [hp.puz.days['2026-10-10'], Object.keys(hp.puz.days).length], [1, 1]);
+  const tp = { puz: { streak: 0, best: 0, last: '', wins: 0, days: {} } };
+  for (let i = 0; i < 120; i++) tp.puz.days['2025-k' + String(i).padStart(3, '0')] = 1;
+  ZB.recordPuzzle(tp, '2026-10-10', true);
+  eq('puzzle: history stays capped at 120', [Object.keys(tp.puz.days).length, !!tp.puz.days['2026-10-10'], !!tp.puz.days['2025-k000']], [120, true, false]);
+  const trim = { k000: 1, k001: 1, k002: 1 };
+  ZB.puzTrim(trim, 2);
+  eq('puzzle: trim drops the oldest keys', Object.keys(trim), ['k001', 'k002']);
+  const av = ZB.puzArchiveView({ puz: { days: { '2026-10-10': 1 } } }, '2026-10-12', 5);
+  eq('puzzle: archive view is oldest first with flags', [av.length, av[0].day, av[4].day, av[4].today, av.map(d => d.solved ? 1 : 0).join('')], [5, '2026-10-08', '2026-10-12', true, '00100']);
 }
 
 // --- blitz clocks: display format ---
@@ -270,6 +285,17 @@ const R = (id, res, o = {}) => Object.assign({ id, res, mate: res !== 'd', plies
     const st = { getItem: k => (k in d ? d[k] : null), setItem: (k, v) => { d[k] = String(v); }, d };
     P.saveProfile(st, p);
     eq('pid survives a reload', P.loadProfile(st).pid, p.pid);
+  }
+  {
+    const d = {};
+    const st = { getItem: k => (k in d ? d[k] : null), setItem: (k, v) => { d[k] = String(v); }, d };
+    st.d[P.PKEY] = JSON.stringify({ v: 1, puz: { streak: 1, best: 1, last: '2026-10-09', wins: 1, days: { '2026-10-08': 1, junk: 1 } } });
+    const q = P.loadProfile(st);
+    eq('puzzle history normalises and seeds the last solved day', [q.puz.days['2026-10-08'], q.puz.days['2026-10-09'], q.puz.days.junk, q.puz.last], [1, 1, undefined, '2026-10-09']);
+    const big = { v: 1, puz: { last: '', days: {} } };
+    for (let i = 0; i < 150; i++) big.puz.days[new Date(Date.UTC(2025, 0, 1) - i * 864e5).toISOString().slice(0, 10)] = 1;
+    st.d[P.PKEY] = JSON.stringify(big);
+    eq('puzzle history capped on load', Object.keys(P.loadProfile(st).puz.days).length, 120);
   }
   eq('initials from words', [P.mkInitials('Ade Ola Musa'), P.mkInitials('Kage Prime'), P.mkInitials('Bo'), P.mkInitials(''), P.mkInitials('a!@#')], ['AOM', 'KPA', 'BOB', 'YOU', 'AAA']);
   {

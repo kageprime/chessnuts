@@ -21,8 +21,8 @@ on, so implementation details stay grounded in what exists. Tag meanings: **(S)*
 - World leaderboards (fast/mate/streak/ladder/region) on Upstash REST via `api/scores.js`
 - Themes (4 boards + 3 pieces), 12 trophies, XP + ranks, HD vector artwork toggle
 - PWA: `sw.js` precaches the shell, offline fully playable, Vercel-deployed
-- 13 test suites in `npm test` (engine, API, P2P, server, matchmaking, SW, smoke, commentary, commentator,
-  startmenu, ladder, themes, layout)
+- 14 test suites in `npm test` (engine, API, P2P, server, matchmaking, SW, smoke, commentary, commentator,
+  puzzle, startmenu, ladder, themes, layout)
 
 ## Principles (keep these true)
 
@@ -71,8 +71,10 @@ The room-code flow is the weakest link. Everything here reuses the existing sign
       Reuses review-mode stepping UI.
 - [ ] **(M)** Mistake Trainer — from your last N games (review data exists), auto-generate 5-position
       drills from your worst eval swings; score them like puzzles; feed the daily XP loop.
-- [ ] **(S/M)** Daily puzzle archive — 7/30-day grid of past `puzDayStr` puzzles, replayable for XP-less
+- [x] **(S/M)** Daily puzzle archive — 7/30-day grid of past `puzDayStr` puzzles, replayable for XP-less
       practice; keeps streak display but adds history (uses the date-seeded generator, so it works offline).
+      Shipped: calendar button beside DAILY PUZZLE, 30-day grid from `prof.puz.days` (capped at 120 keys),
+      past days auto-run as practice (no XP, no streak, no history write).
 - [ ] **(M/L)** Endless ladder — after Nox, procedurally unlock rivals: reuse the `OPPS` shape
       (palette + taunts + `sty`), scale engine strength with XP, tease names ahead. Gives the ladder
       an infinite ceiling using systems that already exist.
