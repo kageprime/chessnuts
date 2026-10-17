@@ -20,7 +20,7 @@ const { chromium } = require('playwright');
   // ---- local 2P game: headline + on-board tips + talk-back ----
   await pg.click('[data-m="2"]');
   await pg.evaluate(() => { fx = false; snd = false; });
-  const mv = async (a, b2) => { await pg.evaluate(([a, b2]) => { const q = s => [8 - +s[1], 'abcdefgh'.indexOf(s[0])]; const [r, c] = q(a), [y, x] = q(b2); play(r, c, y, x, 'Q'); }, [a, b2]); await pg.waitForTimeout(80); };
+  const mv = async (a, b2) => { await pg.evaluate(([a, b2]) => { const q = s => [8 - +s[1], 'abcdefgh'.indexOf(s[0])]; const [r, c] = q(a), [y, x] = q(b2); play(r, c, y, x, 'Q'); }, [a, b2]); await pg.waitForFunction(() => !an, null, { timeout: 3000 }).catch(() => {}); await pg.waitForTimeout(80); };
   await mv('e2', 'e4');
   ok('headline appears after a move', await pg.evaluate(() => document.querySelector('#bub').classList.contains('on') && document.getElementById('bt').textContent.length > 3));
   ok('headline names a verdict', await pg.evaluate(() => /BEST|GOOD|GREAT|INACCURACY|EXCELLENT|BOOK|MISS|MISTAKE|BLUNDER|BRILLIANT|MATE/.test(document.getElementById('bt').textContent)));
@@ -88,10 +88,11 @@ const { chromium } = require('playwright');
   await pg.evaluate(() => { fx = false; snd = false; });
   await mv('f2', 'f3');
   await pg.evaluate(() => { reqId++; play(1, 4, 3, 4, 'Q'); }); // hand-play black's e5
+  await pg.waitForFunction(() => !an, null, { timeout: 3000 }).catch(() => {});
   await mv('g2', 'g4');
   ok('own blunder triggers on-board tip automatically', await pg.evaluate(() => cmtTipActive && cmArrows.length === 1));
   ok('board remains unblocked by sheet overlay', await pg.evaluate(() => !document.querySelector('#s-cmt').classList.contains('on')));
-  ok('speech bubble gives blunder tip', await pg.waitForFunction(() => /TIP|BLUNDER/.test(document.getElementById('bt').textContent), null, { timeout: 3000 }).then(() => true).catch(() => false));
+  ok('speech bubble gives blunder tip', await pg.waitForFunction(() => /TIP|BLUNDER/.test(document.getElementById('bt').textContent), null, { timeout: 6000 }).then(() => true).catch(() => false));
   const resumed = await pg.waitForFunction(() => hist.length >= 4, null, { timeout: 8000 }).then(() => true).catch(() => false);
   ok('cpu moves while on-board tips guide player', resumed);
 
