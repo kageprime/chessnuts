@@ -727,7 +727,7 @@ hist.pop();b=puzSnap.map(R=>R.slice());b.cr=Object.assign({},puzSnap.cr);b.ep=nu
 bubText('NOT MATE - TRY AGAIN');buzz(30)}
 /*PUZEND*/
 /*BLZ*/
-let blitz=0,CLK={w:0,b:0},clkT0=0,flagWin=false;
+let blitz=0,blitzInc=0,CLK={w:0,b:0},clkT0=0,flagWin=false;
 const fmtClock=ms=>{const s=Math.max(0,Math.ceil(ms/1000));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')};
 function updClock(){const e=$('mw'),f=$('mb');if(!e||!f)return;
 e.textContent=fmtClock(CLK.w);f.textContent=fmtClock(CLK.b);
@@ -1136,8 +1136,10 @@ try{p2p.dc&&p2p.dc.close()}catch(e){}try{p2p.pc&&p2p.pc.close()}catch(e){}
 if(p2p.room&&p2p.side=='w'){try{localStorage.removeItem('pc:sig:'+p2p.room)}catch(e){}}}}catch(e){}p2p=null}
 function showNet(msg){scr('s-title',0);scr('s-net',1);blitzLabel();if(msg)$('netmsg').textContent=msg;loadNetElo()}
 function netMsg(txt){$('netmsg').textContent=txt}
-function blitzLabel(){const t='BLITZ: '+(blitz?blitz+' MIN':'OFF');if($('bz'))$('bz').textContent=t;if($('bz2'))$('bz2').textContent=t}
-function blitzCycle(){blitz=blitz==0?3:blitz==3?5:0;blitzLabel()}
+function blitzLabel(){const t='BLITZ: '+(blitz?(blitz+(blitzInc?'+'+blitzInc:'')+' MIN'):'OFF');if($('bz'))$('bz').textContent=t;if($('bz2'))$('bz2').textContent=t}
+const BLZ_SEQ=[[0,0],[1,0],[3,0],[5,0],[3,2],[5,3]];
+function blitzCycle(){let i=0;for(let k=0;k<BLZ_SEQ.length;k++)if(BLZ_SEQ[k][0]==blitz&&BLZ_SEQ[k][1]==blitzInc)i=k;
+const n=BLZ_SEQ[(i+1)%BLZ_SEQ.length];blitz=n[0];blitzInc=n[1];blitzLabel()}
 function wireDc(dc){dc.onopen=netLinked;
 dc.onmessage=e=>{try{netOn(JSON.parse(e.data))}catch(_){}};
 dc.onclose=netLost}
@@ -1177,7 +1179,7 @@ netLeave();await prepIce();
 const my=++qmId;
 p2p={side:'w',room:null,connected:false,cursor:0,iceQ:[],started:false,qm:true};
 showNet('MATCHING - LOOKING FOR A LIVE OPPONENT...');
-const mode=blitz|0;let n=0;
+const mode=blitz?(blitz*10+blitzInc):0;let n=0;
 const step=async()=>{
 if(!p2p||!p2p.qm||my!=qmId)return;
 let j=null;
@@ -1621,7 +1623,7 @@ if(!fx){sfx(hit?'thud':'move');fin();return}
 if(hit){startAnim(r,c,epc?r:y,x,fin);return}
 slideMove(r,c,y,x,fin,dp)}
 function commit(r,c,y,x,promo,hit){const p=b[r][c],prm=p[1]=='P'&&(y==0||y==7),bb=b,mover=turn,cp=bb[y][x]||(p[1]=='P'&&c!=x?bb[r][x]:null);
-b=apply(b,r,c,y,x,promo);last=[[r,c],[y,x]];sel=null;moves=[];hint=null;clearOnBoardTip();turn=turn=='w'?'b':'w';if(blitz){CLK[mover]-=Date.now()-clkT0;clkT0=Date.now()}status();
+b=apply(b,r,c,y,x,promo);last=[[r,c],[y,x]];sel=null;moves=[];hint=null;clearOnBoardTip();turn=turn=='w'?'b':'w';if(blitz){CLK[mover]-=Date.now()-clkT0;clkT0=Date.now();if(blitzInc)CLK[mover]+=blitzInc*1e3}status();
 const sn=toSAN(bb,r,c,y,x,promo,b),ev0={san:sn,piece:p,from:[r,c],to:[y,x],cap:cp,by:mover,promo:prm?promo:null,ply:hist.length+1};
 hist.push({b:bb,t:mover,mv:[r,c,y,x],san:sn,cap:cp,pr:promo});
 BUS.emit('move',ev0);if(cp)BUS.emit('capture',ev0);if(p[1]=='K'&&Math.abs(x-c)==2)BUS.emit('castle',ev0);if(prm)BUS.emit('promotion',ev0);
@@ -3252,7 +3254,7 @@ function shSnapshot(){
  if(!inGame||over)return null;
  if(gmode!='2p'&&gmode!='ladder'&&gmode!='exh')return null;
  try{
-  return{v:1,gmode:gmode,ai:ai,oppId:ai&&opp?opp.id:null,lvl:lvl|0,blitz:blitz|0,
+  return{v:1,gmode:gmode,ai:ai,oppId:ai&&opp?opp.id:null,lvl:lvl|0,blitz:blitz|0,inc:blitzInc|0,
    cw:Math.max(0,Math.round(CLK.w)),cb:Math.max(0,Math.round(CLK.b)),undos:undosLeft,exh:!!exh,
    turn:turn,b:shBoards(b),hist:hist.map(function(h){return{b:shBoards(h.b),t:h.t,mv:h.mv.slice(),san:h.san,cap:!!h.cap,pr:h.pr||null}})};
  }catch(e){return null}
@@ -3274,7 +3276,7 @@ function shRestore(){
  var s=rec&&shValid(rec.state);if(!s)return false;
  au();netLeave();
  ai=!!s.ai;opp=s.ai?(OPPS.find(function(o){return o.id===s.oppId})||OPPS[0]):OPPS[0];exh=!!s.exh;
- gmode=s.gmode;lvl=s.lvl|0;blitz=s.blitz|0;CLK={w:Math.max(0,s.cw|0),b:Math.max(0,s.cb|0)};clkT0=Date.now();
+ gmode=s.gmode;lvl=s.lvl|0;blitz=s.blitz|0;blitzInc=Math.max(0,s.inc|0);CLK={w:Math.max(0,s.cw|0),b:Math.max(0,s.cb|0)};clkT0=Date.now();
  undosLeft=Math.max(0,s.undos|0);recorded=false;lastOut=null;t0g=Date.now();pausedMs=0;
  b=shUnboards(s.b);turn=s.turn;
  hist=s.hist.map(function(h){return{b:shUnboards(h.b),t:h.t,mv:h.mv.slice(),san:String(h.san||''),cap:!!h.cap,pr:h.pr||null}});

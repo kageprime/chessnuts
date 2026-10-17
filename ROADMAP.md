@@ -13,7 +13,7 @@ on, so implementation details stay grounded in what exists. Tag meanings: **(S)*
 ## Current state (so we don't re-build what exists)
 
 - 4 opponents (Mossback, Lady Vex, Old Dune, Nox) with per-opponent palettes, taunts, dialogue
-- Local blitz (3/5 min, flag fall) — no increment yet; undo, hint, pause, resume saves
+- Local blitz (1/3/5 min, 3+2 and 5+3 increments, flag fall); undo, hint, pause, resume saves
 - Daily puzzle (`puz.last` day-keyed, +25 XP, streak) and Puzzle Survival
 - Game review + accuracy report, opening banners, eval gauge, Kibitz commentary with expressions
 - Online: WebRTC P2P, 4-letter room codes, rematch (`netRematch`), reconnect sync (`sync`/`sync-req`),
@@ -21,8 +21,8 @@ on, so implementation details stay grounded in what exists. Tag meanings: **(S)*
 - World leaderboards (fast/mate/streak/ladder/region) on Upstash REST via `api/scores.js`
 - Themes (4 boards + 3 pieces), 12 trophies, XP + ranks, HD vector artwork toggle
 - PWA: `sw.js` precaches the shell, offline fully playable, Vercel-deployed
-- 14 test suites in `npm test` (engine, API, P2P, server, matchmaking, SW, smoke, commentary, commentator,
-  puzzle, startmenu, ladder, themes, layout)
+- 15 test suites in `npm test` (engine, API, P2P, server, matchmaking, SW, smoke, commentary, commentator,
+  puzzle, blitz, startmenu, ladder, themes, layout)
 
 ## Principles (keep these true)
 
@@ -78,8 +78,10 @@ The room-code flow is the weakest link. Everything here reuses the existing sign
 - [ ] **(M/L)** Endless ladder — after Nox, procedurally unlock rivals: reuse the `OPPS` shape
       (palette + taunts + `sty`), scale engine strength with XP, tease names ahead. Gives the ladder
       an infinite ceiling using systems that already exist.
-- [ ] **(S)** Time controls — add increment (3+2, 5+3) and bullet (1 min) to `blitzCycle`; clocks
+- [x] **(S)** Time controls — add increment (3+2, 5+3) and bullet (1 min) to `blitzCycle`; clocks
       already tick correctly, so this is mostly UI + a couple of edge cases in `clockTick`/`flagFall`.
+      Shipped: cycle walks OFF → 1 → 3 → 5 → 3+2 → 5+3; Fischer increment added to the mover's clock
+      in `commit`; quick match partitions by `blitz*10+inc`; snapshots carry the control.
 
 ## Phase 3 — Retention & growth
 
