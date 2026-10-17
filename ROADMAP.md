@@ -21,7 +21,7 @@ on, so implementation details stay grounded in what exists. Tag meanings: **(S)*
 - World leaderboards (fast/mate/streak/ladder/region) on Upstash REST via `api/scores.js`
 - Themes (4 boards + 3 pieces), 12 trophies, XP + ranks, HD vector artwork toggle
 - PWA: `sw.js` precaches the shell, offline fully playable, Vercel-deployed
-- 12 test suites in `npm test` (engine, API, P2P, server, SW, smoke, commentary, commentator,
+- 13 test suites in `npm test` (engine, API, P2P, server, matchmaking, SW, smoke, commentary, commentator,
   startmenu, ladder, themes, layout)
 
 ## Principles (keep these true)
@@ -53,12 +53,15 @@ The room-code flow is the weakest link. Everything here reuses the existing sign
       Metered free tier, decision below). Client fetches once per session and merges into `ICECFG`;
       keep the STUN list as fallback. Fixes the top "can't connect" failure (symmetric NAT / mobile).
       Shipped with Cloudflare Calls env vars (`CLOUDFLARE_TURN_KEY_ID`/`_TOKEN`); degrades to STUN-only.
-- [ ] **(S)** Emotes + quick chat over the existing data channel — `netSend({t:'emoji',d:'GG'})`, a small
-      bar in online games (GG, 👑, 😅, NICE, OOPS). Cheap, big feel improvement.
-- [ ] **(S)** Challenge deep links — `?room=ABCD` pre-fills the join field and auto-joins;
-      use Web Share API where available so "challenge a friend" is one tap.
-- [ ] **(M)** Online Elo — pid-keyed rating in Redis (`pc:elo:<pid>`), updated on online results,
-      shown on the net screen + a small ranked board. Separate from arcade XP.
+- [x] **(S)** Emotes + quick chat over the existing data channel — `netSend({t:'emoji',d:'GG'})`, a small
+      bar in online games (GG, 👑, 😅, NICE, OOPS). Cheap, big feel improvement. Shipped as `t:'em'`
+      messages shown in the Kibitz bubble; the bar appears only during online games.
+- [x] **(S)** Challenge deep links — `?room=ABCD` pre-fills the join field and auto-joins;
+      use Web Share API where available so "challenge a friend" is one tap. Shipped: the host's
+      address bar carries `?room=`, and SHARE uses Web Share (clipboard fallback).
+- [x] **(M)** Online Elo — pid-keyed rating in Redis (`pc:elo:<pid>`), updated on online results,
+      shown on the net screen + a small ranked board. Separate from arcade XP. Shipped as
+      `api/elo.js` (K=32, start 1000, game-id idempotent); the local server mirrors it.
 
 ## Phase 2 — Single-player depth
 

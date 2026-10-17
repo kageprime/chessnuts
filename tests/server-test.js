@@ -56,6 +56,14 @@ const http = require('http');
   const qt = JSON.parse((await req('/api/turn')).body);
   ok('turn reports stun fallback', qt.ok === true && qt.iceServers.length >= 1, JSON.stringify(qt));
 
+  // online Elo ratings
+  const e1 = JSON.parse((await req('/api/elo', 'POST', { pid: 'aa11aa11', name: 'A', result: 'w', gid: 'g1' })).body);
+  ok('elo win recorded', e1.ok === true && e1.elo === 1016 && e1.rec.w === 1, JSON.stringify(e1));
+  const e2 = JSON.parse((await req('/api/elo', 'POST', { pid: 'aa11aa11', name: 'A', result: 'w', gid: 'g1' })).body);
+  ok('elo dedupes same game id', e2.dup === true && e2.delta === 0, JSON.stringify(e2));
+  const e3 = JSON.parse((await req('/api/elo?pid=aa11aa11')).body);
+  ok('elo get returns rating and board', e3.ok === true && e3.elo === 1016 && e3.rank === 1 && e3.top.length === 1 && e3.top[0].me === true, JSON.stringify(e3));
+
   srv.close();
   console.log(fails ? fails + ' FAILED' : 'all server tests passed');
   process.exit(fails ? 1 : 0);

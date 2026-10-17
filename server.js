@@ -60,6 +60,9 @@ const scores = {};
 const queue = {}, pawned = {};
 const mqRoom = () => { const A = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; let s = ''; for (let i = 0; i < 4; i++) s += A[Math.random() * A.length | 0]; return s; };
 
+// In-memory online ratings for local play (mirrors api/elo.js)
+const elo = {}, eloname = {}, elorec = {}, elog = {};
+
 const srv = http.createServer((req, res) => {
   const u = new URL(req.url, 'http://' + (req.headers.host || 'localhost'));
 
@@ -170,6 +173,52 @@ const srv = http.createServer((req, res) => {
       } catch (e) {
         res.end(JSON.stringify({ ok: false, err: 'invalid json' }));
       }
+    });
+    return;
+  }
+
+  // API: Online ratings (same contract as api/elo.js, single process)
+  if (u.pathname === '/api/elo') {
+    let body = '';
+    req.on('data', c => { body += c; });
+    req.on('end', () => {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      const expected = (a, b) => 1 / (1 + Math.pow(10, (b - a) / 400));
+      const nextR = (r, e, s) => Math.max(100, Math.min(3000, Math.round(r + 32 * (s - e))));
+      const rec = p => elorec[p] || { w: 0, l: 0, d: 0 };
+      if (req.method === 'GET') {
+        const who = (u.searchParams.get('pid') || '').toLowerCase();
+        const row = Object.keys(elo).map(p => ({ pid: p, n: eloname[p] || '???', v: elo[p] })).sort((a, b) => b.v - a.v);
+        const top = row.slice(0, 10).map(e => ({ pid: e.pid, n: e.n, v: e.v, me: e.pid === who }));
+        const rank = row.findIndex(e => e.pid === who);
+        res.end(JSON.stringify({ ok: true, elo: who && elo[who] ? elo[who] : 1000, rank: rank < 0 ? 0 : rank + 1, rec: rec(who), top }));
+        return;
+      }
+      if (req.method === 'POST') {
+        try {
+          const b = JSON.parse(body || '{}');
+          if (!/^[0-9a-f]{8}$/.test(b.pid || '')) { res.end(JSON.stringify({ ok: false, err: 'bad pid' })); return; }
+          if (!['w', 'l', 'd'].includes(b.result)) { res.end(JSON.stringify({ ok: false, err: 'bad result' })); return; }
+          const name = String(b.name || 'YOU').replace(/[^A-Za-z0-9 _-]/g, '').slice(0, 12) || 'YOU';
+          const gid = String(b.gid || '');
+          if (gid) {
+            const k = b.pid + ':' + gid;
+            if (elog[k]) { res.end(JSON.stringify({ ok: true, elo: elo[b.pid] || 1000, delta: 0, dup: true, rec: rec(b.pid), opp: null })); return; }
+            elog[k] = 1;
+          }
+          const mine = elo[b.pid] || 1000;
+          const foe = (b.opp && elo[b.opp]) || 1000;
+          const s = b.result == 'w' ? 1 : b.result == 'l' ? 0 : 0.5;
+          const ne = nextR(mine, expected(mine, foe), s);
+          elo[b.pid] = ne; eloname[b.pid] = name;
+          const rr = elorec[b.pid] = elorec[b.pid] || { w: 0, l: 0, d: 0 }; rr[b.result]++;
+          res.end(JSON.stringify({ ok: true, elo: ne, delta: ne - mine, rec: rr, opp: b.opp ? { elo: Math.round(foe), delta: 0 } : null }));
+        } catch (e) {
+          res.end(JSON.stringify({ ok: false, err: 'invalid json' }));
+        }
+        return;
+      }
+      res.end(JSON.stringify({ ok: false, err: 'method' }));
     });
     return;
   }

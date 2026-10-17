@@ -106,6 +106,11 @@ const http = require('http');
   await G.evaluate(() => netOn({ t: 'mv', m: [6, 4, 4, 4] }));
   await G.waitForTimeout(300);
   ok('illegal remote move ignored', (await G.evaluate(() => JSON.stringify(b.map(r => r.map(p => p))))) === before);
+  // emotes over the data channel
+  await H.click('#emo [data-em="GG"]');
+  await G.waitForFunction(() => document.getElementById('bt').textContent.includes('FOE: GG'), null, { timeout: 5000 }).catch(() => { });
+  ok('emote reaches the guest', await G.evaluate(() => document.getElementById('bt').textContent.includes('FOE: GG')));
+  ok('emote echoes locally', await H.evaluate(() => document.getElementById('bt').textContent.includes('YOU: GG')));
   // quick match: two fresh tabs find each other through /api/queue
   const Q = await br.newPage({ viewport: { width: 390, height: 780 } });
   const R = await br.newPage({ viewport: { width: 390, height: 780 } });
@@ -121,6 +126,23 @@ const http = require('http');
   ok('quick match links both players', qs[0].c && qs[1].c, JSON.stringify(qs));
   ok('quick match splits sides', qs[0].side !== qs[1].side && qs[0].g === 'online' && qs[1].g === 'online', JSON.stringify(qs));
   await Q.close(); await R.close();
+  // challenge link: hosting advertises ?room=CODE and the link auto-joins
+  const C1 = await br.newPage({ viewport: { width: 390, height: 780 } });
+  const C2 = await br.newPage({ viewport: { width: 390, height: 780 } });
+  C1.on('pageerror', e => errs.push('C1: ' + e.message));
+  C2.on('pageerror', e => errs.push('C2: ' + e.message));
+  await C1.goto('http://localhost:8902/chess/index.html');
+  await C1.click('#onl'); await C1.click('#neth');
+  await C1.waitForFunction(() => /CODE [A-Z0-9]{4}/.test(document.getElementById('netmsg').textContent), null, { timeout: 8000 }).catch(() => { });
+  const croom = await C1.evaluate(() => ((document.getElementById('netmsg').textContent.match(/CODE ([A-Z0-9]{4})/) || [])[1] || ''));
+  ok('host advertises ?room= link', !!croom && await C1.evaluate(r => location.search.includes('room=' + r), croom), croom);
+  await C2.goto('http://localhost:8902/chess/index.html?room=' + croom);
+  await C2.waitForFunction(() => p2p && p2p.connected, null, { timeout: 40000 }).catch(() => { });
+  await C1.waitForFunction(() => p2p && p2p.connected, null, { timeout: 40000 }).catch(() => { });
+  const linkState = await Promise.all([C1, C2].map(p => p.evaluate(() => ({ c: !!(p2p && p2p.connected), side: p2p && p2p.side, g: gmode, code: document.getElementById('netcode').value }))));
+  ok('challenge link connects both', linkState[0].c && linkState[1].c && linkState[0].side !== linkState[1].side && linkState[0].g === 'online' && linkState[1].g === 'online', JSON.stringify(linkState));
+  ok('challenge link prefills code', linkState[1].code === croom, JSON.stringify(linkState[1]));
+  await C1.close(); await C2.close();
   console.log(errs.length ? 'PAGE ERRORS:\n' + errs.join('\n') : 'no page errors');
   console.log(fails || errs.length ? fails + ' FAILED' : 'all passed');
   await br.close();
