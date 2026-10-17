@@ -55,9 +55,13 @@ function validateScore(s) {
   return null;
 }
 
+const getKvUrl = () => process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL || process.env.REDIS_REST_URL || '';
+const getKvToken = () => process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN || process.env.REDIS_REST_TOKEN || '';
+
 async function kv(path, init) {
-  const r = await fetch(process.env.KV_REST_API_URL + '/' + path, Object.assign(
-    { headers: { Authorization: 'Bearer ' + process.env.KV_REST_API_TOKEN } }, init));
+  const url = getKvUrl(), token = getKvToken();
+  const r = await fetch(url + '/' + path, Object.assign(
+    { headers: { Authorization: 'Bearer ' + token } }, init));
   if (!r.ok) throw new Error('kv ' + r.status);
   return r.json();
 }
@@ -66,9 +70,10 @@ const countryOf = req => String(req.headers['x-vercel-ip-country'] || req.header
 function pairs(arr) { const o = {}; for (let i = 0; i + 1 < arr.length; i += 2) o[arr[i]] = arr[i + 1]; return o; }
 async function resolvePids(pids) {
   if (!pids.length) return [];
-  const r = await fetch(process.env.KV_REST_API_URL + '/pipeline', {
+  const url = getKvUrl(), token = getKvToken();
+  const r = await fetch(url + '/pipeline', {
     method: 'POST',
-    headers: { Authorization: 'Bearer ' + process.env.KV_REST_API_TOKEN, 'Content-Type': 'application/json' },
+    headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
     body: JSON.stringify(pids.map(p => ['HGETALL', 'pc:player:' + p])),
   });
   if (!r.ok) throw new Error('kv pipe');
