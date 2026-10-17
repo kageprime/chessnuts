@@ -12,7 +12,8 @@ on, so implementation details stay grounded in what exists. Tag meanings: **(S)*
 
 ## Current state (so we don't re-build what exists)
 
-- 4 opponents (Mossback, Lady Vex, Old Dune, Nox) with per-opponent palettes, taunts, dialogue
+- 4 opponents (Mossback, Lady Vex, Old Dune, Nox) with per-opponent palettes, taunts, dialogue, plus an
+  endless ladder of procedural tiers (roman-numeral rivals) past the campaign
 - Local blitz (1/3/5 min, 3+2 and 5+3 increments, flag fall); undo, hint, pause, resume saves
 - Daily puzzle (`puz.last` day-keyed, +25 XP, streak) and Puzzle Survival
 - Game review + accuracy report, opening banners, eval gauge, Kibitz commentary with expressions
@@ -21,8 +22,8 @@ on, so implementation details stay grounded in what exists. Tag meanings: **(S)*
 - World leaderboards (fast/mate/streak/ladder/region) on Upstash REST via `api/scores.js`
 - Themes (4 boards + 3 pieces), 12 trophies, XP + ranks, HD vector artwork toggle
 - PWA: `sw.js` precaches the shell, offline fully playable, Vercel-deployed
-- 17 test suites in `npm test` (engine, API, P2P, server, matchmaking, SW, smoke, commentary, commentator,
-  puzzle, blitz, trainer, ghost, startmenu, ladder, themes, layout)
+- 18 test suites in `npm test` (engine, API, P2P, server, matchmaking, SW, smoke, commentary, commentator,
+  puzzle, blitz, trainer, ghost, startmenu, ladder, endless, themes, layout)
 
 ## Principles (keep these true)
 
