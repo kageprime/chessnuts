@@ -388,10 +388,17 @@ const R = (id, res, o = {}) => Object.assign({ id, res, mate: res !== 'd', plies
 }
 {
   const st = mem(); let p = P.newProfile();
+  eq('new profile: assist flags off', [p.cb, p.inst], [0, 0]);
   P.recordResult(p, R('moss', 'w'));
   eq('save succeeds', P.saveProfile(st, p), true);
   const q = P.loadProfile(st);
   eq('saved profile round-trips', [q.unlocked, q.streak, q.rec.moss.w, q.games.length], [['moss', 'vex'], 1, 1, 1]);
+  st.d[P.PKEY] = JSON.stringify({ v: 1, cb: 2, inst: 0 });
+  const f = P.loadProfile(st);
+  eq('color assist flag normalises on load', [f.cb, f.inst], [1, 0]);
+  st.d[P.PKEY] = JSON.stringify({ v: 1, cb: 0, inst: 1 });
+  const g = P.loadProfile(st);
+  eq('install-asked flag survives a reload', [g.cb, g.inst], [0, 1]);
   st.d[P.PKEY] = '{not json';
   eq('corrupt save falls back to a fresh profile', P.loadProfile(st).unlocked, ['moss']);
   st.d[P.PKEY] = JSON.stringify({ v: 1, unlocked: ['dune', 'bogus'], streak: -4, bestStreak: 'x', rec: { moss: { w: 'a', l: 2 } }, games: [null, { id: 'moss', res: 'w' }, { id: 'zzz', res: 'w' }] });

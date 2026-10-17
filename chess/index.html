@@ -15,7 +15,7 @@
 #s-title{background:transparent !important;justify-content:flex-start;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding:calc(12px + env(safe-area-inset-top,0px)) calc(12px + env(safe-area-inset-right,0px)) calc(20px + env(safe-area-inset-bottom,0px)) calc(12px + env(safe-area-inset-left,0px))}
 #s-title .sh-ss{width:min(94vw,390px);max-width:400px;margin:auto 0;box-sizing:border-box;max-height:none;overflow:visible;position:relative;z-index:2}
 #s-title .tm small{display:block;font-size:7px;opacity:.7;margin-top:4px}
-#shResume[hidden]{display:none}
+#shResume[hidden],#inst[hidden]{display:none}
 .sh-mount{display:inline-block;vertical-align:middle;margin-right:10px}
 #s-title #art{display:block !important;width:min(100%,260px) !important;max-width:260px !important;height:auto !important;aspect-ratio:160/48;image-rendering:pixelated;margin:4px auto 6px;opacity:1;filter:drop-shadow(0 3px 6px rgba(0,0,0,0.45))}
 .tbadge{display:inline-block;font-size:7px;letter-spacing:.16em;padding:5px 12px;margin:0 0 6px;background:rgba(18,19,36,0.88);color:#00f0ff;border:2px solid #00f0ff;box-shadow:0 0 8px rgba(0,240,255,0.45),inset 0 0 8px rgba(0,240,255,0.2);text-shadow:0 0 6px rgba(0,240,255,0.8)}
@@ -402,6 +402,9 @@ button:disabled{opacity:.35;pointer-events:none}
    <button class="mm tm" id="shResume" type="button" hidden>
     <i class="mi" aria-hidden="true">▶</i><span class="mtx">CONTINUE<small>RESUME SAVED GAME</small></span>
    </button>
+   <button class="mm tm" id="inst" type="button" hidden>
+    <i class="mi" aria-hidden="true">📲</i><span class="mtx">INSTALL<small>ADD TO HOME SCREEN</small></span>
+   </button>
    <div class="m-row">
     <button class="mm tm grow" id="dp" type="button">
      <i class="mi" aria-hidden="true">🧩</i><span class="mtx"><span id="dpLab">DAILY PUZZLE</span><small>ONE MATE-IN-ONE A DAY</small></span>
@@ -447,6 +450,7 @@ button:disabled{opacity:.35;pointer-events:none}
    <div class="mrow"><span class="ml">SCANLINES</span><button class="sw on tm" id="swCrt" type="button" role="switch" aria-checked="true" aria-label="Scanline overlay"></button></div>
    <div class="mrow"><span class="ml">COMMENTATOR</span><button class="sw tm" id="swTut" type="button" role="switch" aria-checked="false" aria-label="Commentator mode"></button></div>
     <div class="mrow"><span class="ml">HD PIECES</span><button class="sw on tm" id="swHd" type="button" role="switch" aria-checked="true" aria-label="HD Pieces toggle"></button></div>
+    <div class="mrow"><span class="ml">COLOR ASSIST</span><button class="sw tm" id="swCb" type="button" role="switch" aria-checked="false" aria-label="Colorblind assist"></button></div>
    <div class="mrow"><span class="ml">VOLUME</span><input id="setVol" type="range" min="0" max="100" aria-label="Volume"></div>
    <button class="mm tm" id="setBack" type="button"><i class="mi" aria-hidden="true">◄</i><span class="mtx">BACK</span></button>
    <div class="vhint">ESC BACK</div>
@@ -517,7 +521,7 @@ button:disabled{opacity:.35;pointer-events:none}
 </div></div>
 <div class="scr dim" id="s-promo"><div class="px card"><h2>PROMOTE</h2><div class="row" id="pr"></div></div></div>
 <div class="scr dim" id="s-help"><div class="px card"><h2>HOW TO PLAY</h2>
- <p>TAP OR DRAG A PIECE, THEN A GLOWING SQUARE.<br>GREEN DOT = MOVE<br>RED SQUARE = CAPTURE<br>CASTLING AND EN PASSANT WORK.<br>PAWNS PROMOTE - YOU PICK.<br>EACH PIECE HAS ITS OWN CAPTURE FX.<br>UNDO TAKES BACK A MOVE.<br>HINT SHOWS A GOOD ONE.<br>BLITZ CLOCKS ON THE CPU SCREEN.<br>COMMENTATOR (SETTINGS OR PAUSE) READS EVERY MOVE - TAP THE BUBBLE FOR THE FULL BREAKDOWN.<br>FINISHERS UNLOCK AS YOU WIN - EQUIP THEM UNDER THEMES.</p>
+ <p>TAP OR DRAG A PIECE, THEN A GLOWING SQUARE.<br>DOT = MOVE, SQUARE = CAPTURE<br>COLOR ASSIST (SETTINGS) TURNS DOTS BLUE.<br>CASTLING AND EN PASSANT WORK.<br>PAWNS PROMOTE - YOU PICK.<br>EACH PIECE HAS ITS OWN CAPTURE FX.<br>UNDO TAKES BACK A MOVE.<br>HINT SHOWS A GOOD ONE.<br>BLITZ CLOCKS ON THE CPU SCREEN.<br>COMMENTATOR (SETTINGS OR PAUSE) READS EVERY MOVE - TAP THE BUBBLE FOR THE FULL BREAKDOWN.<br>FINISHERS UNLOCK AS YOU WIN - EQUIP THEM UNDER THEMES.</p>
  <button class="big" id="hb">BACK</button></div></div>
 <script src="../shared/shared.js"></script>
 <script src="../shared/shell.js"></script>
@@ -592,13 +596,13 @@ if(!atk(b,r,c,p[0]).length||Math.min(...a)<V[p[1]])s.add(r+','+c)}return s}
 /*ENGEND*/
 /*PROF*/
 const OPP_ORDER=['moss','vex','dune'],PKEY='pixelchess.v1',MIN_FAST=10,TOPN=5;
-const THEME_REQ={board:{scene:null,midnight:{beat:'moss'},candy:{beat:'vex'},ember:{beat:'dune'},glacier:{streak:3}},piece:{classic:null,jade:{beat:'vex'},gold:{beat:'dune'},neon:{streak:5}}};
+const THEME_REQ={board:{scene:null,midnight:{beat:'moss'},candy:{beat:'vex'},ember:{beat:'dune'},glacier:{streak:3},contrast:null},piece:{classic:null,jade:{beat:'vex'},gold:{beat:'dune'},neon:{streak:5},mono:null}};
 const mkPid=()=>{let s='';for(let i=0;i<8;i++)s+='0123456789abcdef'[Math.random()*16|0];return s};
 const mkInitials=(name)=>{name=String(name||'').toUpperCase().replace(/[^A-Z0-9 ]/g,'').trim();if(!name)return'YOU';
 let s=name.split(/\s+/).map(w=>w[0]).join('');const w0=s;
 if(s.length<3){const flat=name.replace(/\s+/g,'');for(const ch of flat){if(s.length>=3)break;if(!s.includes(ch))s+=ch}
 while(s.length<3)s+=w0[s.length%w0.length]}return s.slice(0,3)};
-const newProfile=()=>({v:1,hd:1,unlocked:['moss'],rec:{},streak:0,bestStreak:0,games:[],total:{w:0,l:0,d:0},theme:{board:'scene',piece:'classic'},top:{fast:{},mate:{},streaks:[]},vol:.7,puz:{streak:0,best:0,last:'',wins:0,days:{}},trn:{last:'',best:0,wins:0},end:0,xp:0,name:'YOU',cmt:0,crt:1,pid:mkPid(),elo:1000,initials:'',fin:{eq:{P:'base',N:'base',B:'base',R:'base',Q:'base',K:'base'}}});
+const newProfile=()=>({v:1,hd:1,unlocked:['moss'],rec:{},streak:0,bestStreak:0,games:[],total:{w:0,l:0,d:0},theme:{board:'scene',piece:'classic'},top:{fast:{},mate:{},streaks:[]},vol:.7,puz:{streak:0,best:0,last:'',wins:0,days:{}},trn:{last:'',best:0,wins:0},end:0,xp:0,name:'YOU',cmt:0,crt:1,cb:0,inst:0,pid:mkPid(),elo:1000,initials:'',fin:{eq:{P:'base',N:'base',B:'base',R:'base',Q:'base',K:'base'}}});
 const nn=(x,d=0)=>Number.isFinite(x)&&x>=0?Math.floor(x):d;
 const LESS={fast:(e,x)=>e.ms<x.ms,mate:(e,x)=>e.moves<x.moves||(e.moves==x.moves&&e.ms<x.ms),streaks:(e,x)=>e.n>x.n};
 /* insert into a top list (best first, max TOPN). Returns the 1-based rank, or 0 if it did not make the list. */
@@ -660,7 +664,7 @@ p.vol=(typeof o.vol=='number'&&o.vol>=0&&o.vol<=1)?o.vol:.7;
 p.name=(typeof o.name=='string'?o.name:'YOU').replace(/[^A-Za-z0-9 _-]/g,'').slice(0,12)||'YOU';
 p.initials=(typeof o.initials=='string'?o.initials:'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,3)||mkInitials(p.name);
 p.cmt=o.cmt!=null?(o.cmt?1:0):(o.tutor?1:0); /* COMMENTATOR switch; older saves used tutor */
-p.crt=o.crt===0?0:1;p.hd=o.hd===0?0:1;
+p.crt=o.crt===0?0:1;p.hd=o.hd===0?0:1;p.cb=o.cb?1:0;p.inst=o.inst?1:0;
 /* fields owned by the arcade hub (shared/shared.js): carried through so a chess save never erases them */
 if(typeof o.xp=='number')p.xp=o.xp;if(o.byGame&&typeof o.byGame=='object'&&!Array.isArray(o.byGame))p.byGame=o.byGame;
 p.pid=(typeof o.pid=='string'&&/^[0-9a-f]{8}$/.test(o.pid))?o.pid:mkPid();
@@ -2005,13 +2009,15 @@ const PALDEF=JSON.parse(JSON.stringify(PAL));
 const PTH={classic:PALDEF,
 jade:{w:{o:'#0f3b2e',d:'#2e8a6b',s:'#4fb58f',f:'#8fe3bd',h:'#c4f5de',w:'#ffffff',e:'#0f3b2e',g:'#ffd23f'},b:{o:'#1a0f2e',d:'#3a2466',s:'#523390',f:'#7a52c4',h:'#a07de6',w:'#c9b3ff',e:'#7fffd4',g:'#ff6fa8'}},
 gold:{w:{o:'#5a3a05',d:'#b07d10',s:'#d9a521',f:'#f5cf4f',h:'#ffe58a',w:'#fff6c9',e:'#5a3a05',g:'#e8433a'},b:{o:'#0a0a0f',d:'#2a2a3a',s:'#44445c',f:'#6a6a8a',h:'#9a9ab8',w:'#c8c8e0',e:'#ffd23f',g:'#ffd23f'}},
-neon:{w:{o:'#052e3a',d:'#0b7f99',s:'#14b5d6',f:'#5ae0f5',h:'#a6f3ff',w:'#ffffff',e:'#052e3a',g:'#ff3fa4'},b:{o:'#2a0624',d:'#8a1673',s:'#c01fa0',f:'#ec4fcf',h:'#ff8fe6',w:'#ffd0f6',e:'#e8ff3f',g:'#3ff0ff'}}};
+neon:{w:{o:'#052e3a',d:'#0b7f99',s:'#14b5d6',f:'#5ae0f5',h:'#a6f3ff',w:'#ffffff',e:'#052e3a',g:'#ff3fa4'},b:{o:'#2a0624',d:'#8a1673',s:'#c01fa0',f:'#ec4fcf',h:'#ff8fe6',w:'#ffd0f6',e:'#e8ff3f',g:'#3ff0ff'}},
+mono:{w:{o:'#101014',d:'#9a9aa6',s:'#c3c3cc',f:'#e9e9ef',h:'#ffffff',w:'#ffffff',e:'#101014',g:'#ffd23f'},b:{o:'#e8e8f0',d:'#101016',s:'#26262e',f:'#3c3c46',h:'#8a8a98',w:'#d8d8e2',e:'#ffd23f',g:'#ffd23f'}}};
 const BTH={scene:null,
 midnight:{d:['#2b3a67','#3a4c85','#1f2b4d','#34457a','#27355c'],l:['#8fa3d6','#a9bbe6','#7488bc','#9db0de','#8195c8']},
 candy:{d:['#e56fa0','#f088b3','#c9568a','#ea7aa9','#d9619a'],l:['#fff0f5','#ffffff','#f3d6e3','#fde3ec','#f6dce8']},
 ember:{d:['#7a2e1f','#933b28','#5e2216','#86331f','#6b281a'],l:['#e8b077','#f4c58f','#cf9760','#eebb82','#dca36a']},
-glacier:{d:['#4f8aa8','#63a0c0','#3d6f8a','#5a96b5','#477c99'],l:['#e3f4fa','#f5fcff','#c6e3ee','#eaf7fc','#d4ecf5']}};
-const TNAME={board:{scene:'SCENE',midnight:'MIDNIGHT',candy:'CANDY',ember:'EMBER',glacier:'GLACIER'},piece:{classic:'CLASSIC',jade:'JADE',gold:'GOLD',neon:'NEON'}};
+glacier:{d:['#4f8aa8','#63a0c0','#3d6f8a','#5a96b5','#477c99'],l:['#e3f4fa','#f5fcff','#c6e3ee','#eaf7fc','#d4ecf5']},
+contrast:{d:['#23252f','#2f3140','#191a22','#292b38','#1f212b'],l:['#f3efe1','#ffffff','#ddd8c8','#f9f6ec','#e9e4d4']}};
+const TNAME={board:{scene:'SCENE',midnight:'MIDNIGHT',candy:'CANDY',ember:'EMBER',glacier:'GLACIER',contrast:'CONTRAST'},piece:{classic:'CLASSIC',jade:'JADE',gold:'GOLD',neon:'NEON',mono:'MONO'}};
 /* sprite pixel runs are cached as plain data and drawn with fillRect */
 const SC={},SW={},SB={},SRUN={};
 /* Sprites are drawn straight from their pixel data (no offscreen canvas cache): some mobile browsers
@@ -2029,13 +2035,13 @@ g.fillStyle=dk?B.d[1]:B.l[1];g.fillRect(x,y,20,1);g.fillRect(x,y,1,20);
 g.fillStyle=dk?B.d[2]:B.l[2];g.fillRect(x,y+19,20,1);g.fillRect(x+19,y,1,20);
 g.fillStyle=dk?B.d[3]:B.l[3];for(let k=0;k<7;k++)g.fillRect(x+(r*5+c*3+k*7)%17+1,y+(r*11+c*7+k*5)%17+1,1,1);
 g.fillStyle=dk?B.d[4]:B.l[4];for(let k=0;k<5;k++)g.fillRect(x+(r*3+c*7+k*9)%17+1,y+(r*5+c*13+k*11)%17+1,1,1)}}
-function hl(r,c){const x=c*20,y=r*20,dk=(r+c)%2,is=p=>p&&p[0]==r&&p[1]==c,fill=col=>{ctx.fillStyle=col;ctx.fillRect(x+1,y+1,18,18)};
+function hl(r,c){const x=c*20,y=r*20,dk=(r+c)%2,CB=!!(prof&&prof.cb),is=p=>p&&p[0]==r&&p[1]==c,fill=col=>{ctx.fillStyle=col;ctx.fillRect(x+1,y+1,18,18)};
 if(last&&(is(last[0])||is(last[1])))fill(dk?'#4f9bd0':'#8fd3f4');
-if(chkCol&&b[r][c]==chkCol+'K'){const p=Math.floor(performance.now()/220)%2;fill(p?'#e8433a':'#b71c1c');ctx.fillStyle='#ffb4b4';ctx.fillRect(x+1,y+1,18,1);ctx.fillRect(x+1,y+18,18,1);ctx.fillRect(x+1,y+1,1,18);ctx.fillRect(x+18,y+1,1,18)}
+if(chkCol&&b[r][c]==chkCol+'K'){const p=Math.floor(performance.now()/220)%2;fill(p?'#e8433a':(CB?'#ffffff':'#b71c1c'));ctx.fillStyle=CB?'#20070a':'#ffb4b4';ctx.fillRect(x+1,y+1,18,1);ctx.fillRect(x+1,y+18,18,1);ctx.fillRect(x+1,y+1,1,18);ctx.fillRect(x+18,y+1,1,18)}
 if(hint&&(is(hint[0])||is(hint[1])))fill(Math.floor(performance.now()/300)%2?'#b07cff':'#d9b8ff');
 if(is(sel))fill(Math.floor(performance.now()/320)%2?'#ffe14d':'#ffcf1a');
 if(moves.some(m=>m[0]==r&&m[1]==c)){const cap=b[r][c]||(sel&&b[sel[0]][sel[1]][1]=='P'&&sel[1]!=c);
-if(cap)fill('#e8433a');else{const o=Math.floor(performance.now()/280)%2;ctx.fillStyle='#2fbf6a';ctx.fillRect(x+8,y+7+o,4,6);ctx.fillRect(x+7,y+8+o,6,4);ctx.fillStyle='#b8f5cf';ctx.fillRect(x+8,y+8+o,2,2)}}
+if(cap)fill('#e8433a');else{const o=Math.floor(performance.now()/280)%2;ctx.fillStyle=CB?'#2b6be0':'#2fbf6a';ctx.fillRect(x+8,y+7+o,4,6);ctx.fillRect(x+7,y+8+o,6,4);ctx.fillStyle=CB?'#d0e2ff':'#b8f5cf';ctx.fillRect(x+8,y+8+o,2,2)}}
 if(hov&&is(hov)){ctx.fillStyle='#3d8bff';
 ctx.fillRect(x+1,y+1,5,1);ctx.fillRect(x+1,y+1,1,5);ctx.fillRect(x+14,y+1,5,1);ctx.fillRect(x+18,y+1,1,5);
 ctx.fillRect(x+1,y+18,5,1);ctx.fillRect(x+1,y+14,1,5);ctx.fillRect(x+14,y+18,5,1);ctx.fillRect(x+18,y+14,1,5)}
@@ -2538,7 +2544,7 @@ if(!mv){ghost.live=false;ghArrows=[];bubText('GHOST LINE BREAKS HERE - YOU ARE O
 ghArrows=[[mv[0],mv[1],mv[2],mv[3],b[mv[0]][mv[1]]]];
 bubText('GHOST '+ghost.name.toUpperCase()+' PLAYS '+String(gs[k]).toUpperCase()+' - '+ghost.goal,1);draw()}
 /*GHTEND*/
-function toTitle(){try{shSave()}catch(e){}inGame=false;paused=false;an=null;sa=null;pend=null;drag=null;pp=[];hop=null;mateAnim=null;ghost=null;ghArrows=[];gid++;reqId++;$('app').classList.remove('on');['s-opp','s-net','s-pause','s-over','s-help','s-promo','s-report','s-puz'].forEach(i=>scr(i,0));scr('s-title',1);try{mvHome()}catch(e){}puzLabel();rushLabel();trnLabel();rankLabel();netLeave();taunt();tmFocus();sceneSet();try{shRefreshTitle()}catch(e){}}
+function toTitle(){try{shSave()}catch(e){}inGame=false;paused=false;an=null;sa=null;pend=null;drag=null;pp=[];hop=null;mateAnim=null;ghost=null;ghArrows=[];gid++;reqId++;$('app').classList.remove('on');['s-opp','s-net','s-pause','s-over','s-help','s-promo','s-report','s-puz'].forEach(i=>scr(i,0));scr('s-title',1);try{mvHome()}catch(e){}puzLabel();rushLabel();trnLabel();rankLabel();netLeave();taunt();tmFocus();sceneSet();try{shRefreshTitle()}catch(e){}instVis()}
 function pause(){if(!inGame||an||sa||over||paused||pend)return;if(blitz)CLK[turn]-=Date.now()-clkT0;paused=true;pauseAt=Date.now();drag=null;scr('s-pause',1);musDuck(1);emoShow()}
 function resume(){if(paused)pausedMs+=Date.now()-pauseAt;paused=false;if(blitz)clkT0=Date.now();scr('s-pause',0);musDuck(0);if(aiPend){const m=aiPend;aiPend=null;play(...m)}else if(aiWait){aiWait=0;setTimeout(aiMove,150)}emoShow()}
 function showPromo(){const row=$('pr');row.innerHTML='';
@@ -3107,17 +3113,30 @@ $('ob').onclick=()=>{scr('s-opp',0);scr('s-title',1);foc('shPlay')};$('ex').oncl
 Q('.tlvl').forEach(e=>e.onclick=()=>{lvl=(lvl+1)%3;Q('.tlvl').forEach(x=>x.textContent='CPU: '+['EASY','NORMAL','HARD'][lvl])});
 /* settings: shared between the title menu switches and the pause-screen buttons */
 function syncToggles(){Q('.tsnd').forEach(x=>x.textContent=snd?'SND ON':'SND OFF');Q('.tfx').forEach(x=>x.textContent=fx?'FX ON':'FX OFF');
-const sw={swSnd:!!snd,swFx:!!fx,swCrt:!!crtOn,swTut:!!cmt};for(const id in sw){const b=$(id);if(b){b.classList.toggle('on',sw[id]);b.setAttribute('aria-checked',sw[id]?'true':'false')}}
+const sw={swSnd:!!snd,swFx:!!fx,swCrt:!!crtOn,swTut:!!cmt,swCb:!!(prof&&prof.cb)};for(const id in sw){const b=$(id);if(b){b.classList.toggle('on',sw[id]);b.setAttribute('aria-checked',sw[id]?'true':'false')}}
 const g=$('tg');if(g)g.textContent='COMMENTATOR: '+(cmt?'ON':'OFF')}
 function setSnd(v){snd=!!v;if(snd){au();sfx('move');if(inGame&&scn)musStart(scn)}else musStop(true);syncToggles()}
 function setFx(v){fx=!!v;syncToggles()}
 function setCrt(v){crtOn=v?1:0;prof.crt=crtOn;saveProfile(store,prof);document.body.classList.toggle('noscan',!crtOn);syncToggles()}
 function setCmt(v){cmt=v?1:0;prof.cmt=cmt;saveProfile(store,prof);syncToggles();if(!cmt&&cmtOn())cmtExit()}
 function setHd(v){prof.hd=v?1:0;saveProfile(store,prof);syncToggles();applyTheme()}
+function setCb(v){prof.cb=v?1:0;saveProfile(store,prof);syncToggles();if(b&&inGame)draw()}
 Q('.tsnd').forEach(e=>e.onclick=()=>setSnd(!snd));Q('.tfx').forEach(e=>e.onclick=()=>setFx(!fx));
-$('swSnd').onclick=()=>setSnd(!snd);$('swFx').onclick=()=>setFx(!fx);$('swCrt').onclick=()=>setCrt(!crtOn);$('swTut').onclick=()=>setCmt(!cmt);const shd=$('swHd');if(shd)shd.onclick=()=>setHd(prof.hd===0?1:0);Q('.thd').forEach(e=>e.onclick=()=>setHd(prof.hd===0?1:0));
+$('swSnd').onclick=()=>setSnd(!snd);$('swFx').onclick=()=>setFx(!fx);$('swCrt').onclick=()=>setCrt(!crtOn);$('swTut').onclick=()=>setCmt(!cmt);$('swCb').onclick=()=>setCb(!prof.cb);const shd=$('swHd');if(shd)shd.onclick=()=>setHd(prof.hd===0?1:0);Q('.thd').forEach(e=>e.onclick=()=>setHd(prof.hd===0?1:0));
 $('setVol').value=Math.round(VOL*100);$('setVol').oninput=e=>{au();setVol(e.target.value/100)};
 $('tg').onclick=()=>setCmt(!cmt);cmt=prof.cmt?1:0;syncToggles();
+/* install prompt: offer "add to home screen" once, after a few games */
+let instEv=null,instT=0;
+const instStand=()=>{try{return matchMedia('(display-mode:standalone)').matches||navigator.standalone===true}catch(e){return false}};
+const instIos=()=>/iphone|ipad|ipod/i.test(navigator.userAgent)||(/macintosh/i.test(navigator.userAgent)&&navigator.maxTouchPoints>1);
+function instVis(){const b=$('inst');if(!b)return;
+const g2=(prof.total.w+prof.total.l+prof.total.d)|0;
+b.hidden=!!(prof.inst||g2<3||instStand()||(!instEv&&!instIos()))}
+$('inst').onclick=()=>{au();const b=$('inst');prof.inst=1;saveProfile(store,prof);
+if(instEv&&typeof instEv.prompt=='function'){const ev=instEv;instEv=null;b.hidden=true;try{ev.prompt()}catch(e){}sfx('sel')}
+else{const s=b.querySelector('small');if(s)s.textContent='SHARE THEN "ADD TO HOME SCREEN"';clearTimeout(instT);instT=setTimeout(()=>{b.hidden=true},8000);sfx('sel')}};
+addEventListener('beforeinstallprompt',e=>{try{e.preventDefault()}catch(_){}instEv=e;instVis()});
+addEventListener('appinstalled',()=>{instEv=null;prof.inst=1;saveProfile(store,prof);instVis()});
 /* title view switching: main list <-> settings/credits, with focus return */
 function mvShow(id){Q('#s-title .mv').forEach(v=>v.classList.toggle('on',v.id===id))}
 var mvFrom='mvMain',mvOp=null;
@@ -3413,7 +3432,7 @@ for(const s of bgS){s.y-=s.v;s.x+=Math.sin(bgT*.05+s.ph)*.03;if(s.y<-2){s.y=h+1;
 if(Math.sin(bgT*.12+s.ph)<-.55)continue;const X=Math.round(s.x),Y=Math.round(s.y);bx.fillStyle=s.c;bx.fillRect(X,Y,1,1);
 if(s.big){bx.fillRect(X-1,Y,3,1);bx.fillRect(X,Y-1,1,3)}}}
 let bgI=0;function bgStart(){bgBuild();bgTick();clearInterval(bgI);if(!matchMedia('(prefers-reduced-motion:reduce)').matches)bgI=setInterval(bgTick,110)}
-applyPieces();mkbg(boardCols());size();init();scr('s-title',1);bgStart();
+applyPieces();mkbg(boardCols());size();init();scr('s-title',1);bgStart();instVis();
 try{const dd=new URLSearchParams(location.search).get('d');if(dd&&/^\d{4}-\d{2}-\d{2}$/.test(dd))startPuzzle(dd)}catch(e){}
 /* ---- arcade shell: start hierarchy, sidebar drawer, snapshots (game: chess) ---- */
 function shBoards(g){return{g:g.map(function(r){return r.slice()}),cr:{wK:g.cr.wK,wQ:g.cr.wQ,bK:g.cr.bK,bQ:g.cr.bQ},ep:g.ep?g.ep.slice():null}}

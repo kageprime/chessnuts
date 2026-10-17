@@ -25,9 +25,10 @@ const { chromium } = require('playwright');
     const r = async s => await pg.locator(s).boundingBox();
     for (const s of ['#hp', '#th', '#pf']) { const bb = await r(s); ok(name + ' title ' + s + ' on screen', bb && bb.x >= 0 && bb.x + bb.width <= vp.width && bb.y >= 0 && bb.y + bb.height <= vp.height, JSON.stringify(bb)); }
     await pg.click('#th');
-    ok(name + ' themes: 5 board + 4 piece options', (await pg.locator('#tb .tc').count()) === 5 && (await pg.locator('#tp .tc').count()) === 4);
+    ok(name + ' themes: 6 board + 5 piece options', (await pg.locator('#tb .tc').count()) === 6 && (await pg.locator('#tp .tc').count()) === 5);
     ok(name + ' themes: defaults selected', (await pg.locator('.tc.sel').count()) === 2 && /SELECTED/.test(await pg.locator('#tb .tc').first().innerText()));
     ok(name + ' themes: 7 locked at the start', (await pg.locator('#tb .tc.lk').count()) + (await pg.locator('#tp .tc.lk').count()) === 7);
+    ok(name + ' themes: CONTRAST board and MONO pieces need no unlocks', (await pg.locator('#tb .tc').nth(5).getAttribute('aria-disabled')) === 'false' && /CONTRAST/.test(await pg.locator('#tb .tc').nth(5).innerText()) && (await pg.locator('#tp .tc').nth(4).getAttribute('aria-disabled')) === 'false' && /MONO/.test(await pg.locator('#tp .tc').nth(4).innerText()));
     ok(name + ' finishers: 6, all locked, pawn wants Vex', (await pg.locator('#tf .tc').count()) === 6 && (await pg.locator('#tf .tc.lk').count()) === 6 && /BEAT LADY VEX/.test(await pg.locator('#tf .tc').first().innerText()) && /BEAT MOSSBACK/.test(await pg.locator('#tf .tc').nth(1).innerText()));
     ok(name + ' locked text names the opponent', /BEAT MOSSBACK/.test(await pg.locator('#tb .tc').nth(1).innerText()) && /3 WIN STREAK/.test(await pg.locator('#tb .tc').nth(4).innerText()) && /5 WIN STREAK/.test(await pg.locator('#tp .tc').nth(3).innerText()));
     ok(name + ' themes pane has no sideways scroll', await fits(pg, '#s-themes .pane'));

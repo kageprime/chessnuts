@@ -22,8 +22,8 @@ on, so implementation details stay grounded in what exists. Tag meanings: **(S)*
 - World leaderboards (fast/mate/streak/ladder/region) on Upstash REST via `api/scores.js`
 - Themes (4 boards + 3 pieces), 12 trophies, XP + ranks, HD vector artwork toggle
 - PWA: `sw.js` precaches the shell, offline fully playable, Vercel-deployed
-- 18 test suites in `npm test` (engine, API, P2P, server, matchmaking, SW, smoke, commentary, commentator,
-  puzzle, blitz, trainer, ghost, startmenu, ladder, endless, themes, layout)
+- 20 test suites in `npm test` (engine, API, P2P, server, matchmaking, SW, smoke, commentary, commentator,
+  puzzle, blitz, trainer, ghost, startmenu, install, ladder, endless, themes, colorblind, layout)
 
 ## Principles (keep these true)
 
@@ -107,12 +107,14 @@ The room-code flow is the weakest link. Everything here reuses the existing sign
       Needs VAPID keys in Vercel env; ask permission after game 3, not on first load.
 - [ ] **(M)** Dynamic OG images for share/challenge links — Vercel edge function rendering the board +
       result to PNG (borrow the `shareCard` canvas renderer) so links look alive when pasted in chat.
-- [ ] **(S)** Install prompt flow — capture `beforeinstallprompt`, offer "ADD TO HOME SCREEN" after a
-      few games; falls back to iOS "Share → Add to Home Screen" hint.
+- [x] **(S)** Install prompt flow — the title screen shows `#inst` after 3 games when the browser fires
+      `beforeinstallprompt`; tapping it prompts once and `prof.inst` remembers being asked (the event or
+      `appinstalled` clears it). iOS, which never fires the event, gets a Share → Add to Home Screen hint.
 - [ ] **(M)** Leaderboard seasons — monthly resets with permanent "SEASON 1 CHAMP" badges next to names;
       gives lapsed players a return hook.
-- [ ] **(S)** Colorblind-safe theme option — the theme system is data-driven (`PAL`, board themes);
-      add a high-contrast palette + a colorblind-friendly piece set toggle.
+- [x] **(S)** Colorblind-safe theme option — COLOR ASSIST in settings (`prof.cb`) turns move dots blue,
+      keeps captures as distinct red squares and flashes checks in high-contrast white; the CONTRAST board
+      and MONO piece set ship unlocked for everyone.
 
 ## Phase 4 — Engineering & quality
 

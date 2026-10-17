@@ -9,7 +9,8 @@ Standalone retro pixel-art chess game.
 - **Ghost Replays**: World-board records keep the record holder's full game; "RACE THE GHOST" shadows their moves on your board while you try to mate faster.
 - **Unlockable Retro Themes**: Boards (Midnight, Candy, Glacier, Ember) and pieces (Jade, Gold, Neon).
 - **Console Trophies**: 12 declarative achievements with XP awards.
-- **Offline / PWA Ready**: `sw.js` caches the app shell, so the game installs and plays offline; 100% playable directly in a browser with no server dependencies.
+- **Color Assist**: A settings toggle swaps the green move dots for blue (capture squares keep their red, distinct shape), with always-available CONTRAST boards and MONO pieces for maximum readability.
+- **Offline / PWA Ready**: `sw.js` caches the app shell, so the game installs and plays offline (a one-time ADD TO HOME SCREEN offer appears on the title screen after a few games); 100% playable directly in a browser with no server dependencies.
 
 ## Quick Start
 
