@@ -21,8 +21,8 @@ on, so implementation details stay grounded in what exists. Tag meanings: **(S)*
 - World leaderboards (fast/mate/streak/ladder/region) on Upstash REST via `api/scores.js`
 - Themes (4 boards + 3 pieces), 12 trophies, XP + ranks, HD vector artwork toggle
 - PWA: `sw.js` precaches the shell, offline fully playable, Vercel-deployed
-- 15 test suites in `npm test` (engine, API, P2P, server, matchmaking, SW, smoke, commentary, commentator,
-  puzzle, blitz, startmenu, ladder, themes, layout)
+- 16 test suites in `npm test` (engine, API, P2P, server, matchmaking, SW, smoke, commentary, commentator,
+  puzzle, blitz, trainer, startmenu, ladder, themes, layout)
 
 ## Principles (keep these true)
 
@@ -69,8 +69,11 @@ The room-code flow is the weakest link. Everything here reuses the existing sign
       validates and **discards** it. Persist the record-holder's game (`pc:replay:<board>`), and add
       "RACE THE GHOST": replay their moves on a shadow overlay while you play the same position line.
       Reuses review-mode stepping UI.
-- [ ] **(M)** Mistake Trainer — from your last N games (review data exists), auto-generate 5-position
+- [x] **(M)** Mistake Trainer — from your last N games (review data exists), auto-generate 5-position
       drills from your worst eval swings; score them like puzzles; feed the daily XP loop.
+      Shipped: replays up to 8 recent `prof.games` (SAN), flags white moves the opponent's best reply
+      punishes for 2.5+ pawns, drills the top 5 (position before the move). Fixed = within 0.5 pawns
+      of the strongest alternative; 5 XP per fix, once a day; best score on the menu label.
 - [x] **(S/M)** Daily puzzle archive — 7/30-day grid of past `puzDayStr` puzzles, replayable for XP-less
       practice; keeps streak display but adds history (uses the date-seeded generator, so it works offline).
       Shipped: calendar button beside DAILY PUZZLE, 30-day grid from `prof.puz.days` (capped at 120 keys),

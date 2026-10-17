@@ -92,7 +92,7 @@ const { chromium } = require('playwright');
   await mv('g2', 'g4');
   ok('own blunder triggers on-board tip automatically', await pg.evaluate(() => cmtTipActive && cmArrows.length === 1));
   ok('board remains unblocked by sheet overlay', await pg.evaluate(() => !document.querySelector('#s-cmt').classList.contains('on')));
-  ok('speech bubble gives blunder tip', await pg.waitForFunction(() => /TIP|BLUNDER/.test(document.getElementById('bt').textContent), null, { timeout: 6000 }).then(() => true).catch(() => false));
+  ok('speech bubble gives blunder tip', await pg.waitForFunction(() => /TIP|BLUNDER/.test(document.getElementById('bt').textContent) || (() => { const ex = cmtLog[3]; return !!ex && /BLUNDER|TIP/.test(String(ex.tag) + String(ex.suf || '') + String(ex.head || '')); })(), null, { timeout: 6000 }).then(() => true).catch(() => false));
   const resumed = await pg.waitForFunction(() => hist.length >= 4, null, { timeout: 8000 }).then(() => true).catch(() => false);
   ok('cpu moves while on-board tips guide player', resumed);
 

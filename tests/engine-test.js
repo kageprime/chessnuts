@@ -146,6 +146,43 @@ eq('puzzles: 27 entries', ZB.PUZ.length, 27);
   eq('puzzle: archive view is oldest first with flags', [av.length, av[0].day, av[4].day, av[4].today, av.map(d => d.solved ? 1 : 0).join('')], [5, '2026-10-08', '2026-10-12', true, '00100']);
 }
 
+// --- mistake trainer: san parsing, drill scan, judging, day-capped XP ---
+const TR = new Function(code + html.split('/*TRN*/')[1].split('/*TRNEND*/')[0] + ';return{trnParse,trnScanGame,trainerDrills,trnJudge,recordTrainer}')();
+{
+  let gb = E.newBoard(), gt = 'w'; const sans = [];
+  for (const m of ['e2e4', 'e7e5', 'd1h5', 'b8c6', 'h5e5']) {
+    const [r, c] = sq(m.slice(0, 2)), [y, x] = sq(m.slice(2, 4));
+    const nb = E.apply(gb, r, c, y, x, 'Q'); sans.push(E.toSAN(gb, r, c, y, x, 'Q', nb)); gb = nb; gt = gt === 'w' ? 'b' : 'w';
+  }
+  eq('trainer: blunder game SAN', sans.join(' '), 'e4 e5 Qh5 Nc6 Qxe5+');
+  const ds = TR.trainerDrills({ games: [{ san: sans.join(' '), date: 1 }] }, 5, 6);
+  eq('trainer: finds the queen hang as a drill', [ds.length, ds[0] && ds[0].san], [1, 'Qxe5+']);
+  const jBad = TR.trnJudge(ds[0].b, [3, 7, 3, 4], 'Q');
+  eq('trainer: the original blunder grades as a miss', jBad.ok, false);
+  const jGood = TR.trnJudge(ds[0].b, [7, 6, 5, 5], 'Q');
+  eq('trainer: Nf3 grades as fixed', jGood.ok, true);
+  eq('trainer: a best move is offered as feedback', typeof jBad.bestSan === 'string' && jBad.bestSan.length > 1, true);
+  eq('trainer: judged evals are reported in pawns', [typeof jBad.pv, jBad.pv < -2, typeof jGood.best], ['number', true, 'number']);
+}
+{
+  let gb = E.newBoard(), gt = 'w';
+  for (const m of ['e2e4', 'e7e5', 'g1f3', 'b8c6', 'f1c4', 'f8c5']) {
+    const [r, c] = sq(m.slice(0, 2)), [y, x] = sq(m.slice(2, 4)); gb = E.apply(gb, r, c, y, x, 'Q'); gt = gt === 'w' ? 'b' : 'w';
+  }
+  const m = TR.trnParse(gb, 'w', 'O-O');
+  eq('trainer: parses castling', m && m.slice(0, 4), [7, 4, 7, 6]);
+  const [pb] = fen('k7/4P3/8/8/8/8/8/4K3 w - -');
+  const pm = TR.trnParse(pb, 'w', 'e8=Q+');
+  eq('trainer: parses promotions', [!!pm, pm && pm[4]], [true, 'Q']);
+}
+{
+  const tp = { xp: 1 };
+  const r1 = TR.recordTrainer(tp, '2026-10-17', 4);
+  eq('trainer: first session pays 5 XP per drill', [r1.again, r1.xp, r1.best, tp.xp], [false, 20, 4, 21]);
+  const r2 = TR.recordTrainer(tp, '2026-10-17', 5);
+  eq('trainer: same-day replay pays nothing but updates best', [r2.again, r2.xp, r2.best, tp.xp, tp.trn.best], [true, 0, 5, 21, 5]);
+}
+
 // --- blitz clocks: display format ---
 const BZ = new Function(html.split('/*BLZ*/')[1].split('/*BLZEND*/')[0].replace(/setInterval\(clockTick,250\);/, '') + ';return{fmtClock}')();
 eq('clock 3:00', BZ.fmtClock(180000), '3:00');
