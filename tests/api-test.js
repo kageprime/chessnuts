@@ -58,6 +58,48 @@ const res = () => { const r = {}; r.status = (c) => (r.code = c, r); r.json = (o
   r = res();
   await api({ method: 'POST', body: { ...good, value: -5, ms: -5 }, headers: {} }, r);
   eq('POST invalid', r.code, 400);
+  // ---- ghost replays: top submit stores the record line, GET serves it back ----
+  const gh = { ...good, board: 'mate:dune', value: 4, plies: 7, ms: 8000, opp: 'dune', san: 'e4 e5 Bc4 Nc6 Qh5 Nf6 Qxf7#' };
+  const sets = [];
+  global.fetch = async (url) => {
+    const u = String(url);
+    if (u.includes('/incr/')) return { ok: true, json: async () => ({ result: 1 }) };
+    if (u.includes('/expire/')) return { ok: true, json: async () => ({ result: 1 }) };
+    if (u.includes('/set/pc:replay:')) { sets.push(u); return { ok: true, json: async () => ({ result: 'OK' }) }; }
+    if (u.includes('/zrevrank/')) return { ok: true, json: async () => ({ result: 0 }) };
+    return { ok: true, json: async () => ({ result: 1 }) };
+  };
+  r = res();
+  await api({ method: 'POST', body: gh, headers: {} }, r);
+  eq('replay: top submit stores the record line', [r.code, r.body.rank, sets.length, decodeURIComponent(sets[0] || '').includes('Qxf7#')], [200, 1, 1, true]);
+  global.fetch = async (url) => {
+    const u = String(url);
+    if (u.includes('/incr/')) return { ok: true, json: async () => ({ result: 1 }) };
+    if (u.includes('/expire/')) return { ok: true, json: async () => ({ result: 1 }) };
+    if (u.includes('/set/pc:replay:')) { sets.push(u); return { ok: true, json: async () => ({ result: 'OK' }) }; }
+    if (u.includes('/zrevrank/')) return { ok: true, json: async () => ({ result: 2 }) };
+    return { ok: true, json: async () => ({ result: 1 }) };
+  };
+  const setsBefore = sets.length;
+  r = res();
+  await api({ method: 'POST', body: gh, headers: {} }, r);
+  eq('replay: mid-table submit keeps the old ghost', [r.body.rank, sets.length === setsBefore], [3, true]);
+  const stored = JSON.stringify({ n: 'KAI', moves: 4, ms: 8000, san: 'e4 e5 Bc4 Nc6 Qh5 Nf6 Qxf7#', board: 'mate:dune' });
+  global.fetch = async (url) => {
+    const u = String(url);
+    if (u.includes('/get/pc:replay:')) return { ok: true, json: async () => ({ result: stored }) };
+    if (u.includes('/zrevrange/')) return { ok: true, json: async () => ({ result: [JSON.stringify({ n: 'KAI', v: 4, d: 1 }), '4'] }) };
+    return { ok: true, json: async () => ({ result: 1 }) };
+  };
+  r = res();
+  await api({ method: 'GET', query: { replay: 'mate:dune' }, headers: {} }, r);
+  eq('replay: GET returns the stored game', [r.code, r.body.ok, r.body.replay.san.slice(0, 2)], [200, true, 'e4']);
+  r = res();
+  await api({ method: 'GET', query: { replay: 'ladder:global' }, headers: {} }, r);
+  eq('replay: ladder boards have no replays', r.code, 400);
+  r = res();
+  await api({ method: 'GET', query: { board: 'mate:dune' }, headers: {} }, r);
+  eq('replay: board GET advertises the ghost', [r.body.ghost && r.body.ghost.n, r.body.ghost && r.body.ghost.moves], ['KAI', 4]);
   // ladder POST files global + regional + player hash
   const seen = [];
   global.fetch = async (url, init) => {

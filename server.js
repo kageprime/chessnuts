@@ -55,6 +55,7 @@ setInterval(() => {
 
 // In-memory scores store for local testing
 const scores = {};
+const replays = {};
 
 // In-memory quick-match queue (single process, so pairing has no races)
 const queue = {}, pawned = {};
@@ -108,22 +109,43 @@ const srv = http.createServer((req, res) => {
     return;
   }
 
-  // API: Scores (leaderboards mock or local store)
+  // API: Scores (leaderboards mock or local store, with ghost replays)
   if (u.pathname === '/api/scores') {
     let body = '';
     req.on('data', c => { body += c; });
     req.on('end', () => {
       res.writeHead(200, { 'Content-Type': 'application/json' });
+      const asc = b => /^(fast|mate):/.test(b);
+      const sortedTop = b => (scores[b] || []).slice().sort((x, y) => asc(b) ? x.v - y.v : y.v - x.v).slice(0, 5);
       if (req.method === 'GET') {
+        const rb = u.searchParams.get('replay');
+        if (rb) { res.end(JSON.stringify({ ok: true, replay: replays[rb] || null })); return; }
         const board = u.searchParams.get('board') || 'streak';
-        res.end(JSON.stringify({ ok: true, board, top: scores[board] || [] }));
+        const top = sortedTop(board), rep = replays[board];
+        res.end(JSON.stringify(rep && asc(board)
+          ? { ok: true, board, top, ghost: { n: rep.n, moves: rep.moves, ms: rep.ms } }
+          : { ok: true, board, top }));
       } else if (req.method === 'POST') {
         try {
           const s = JSON.parse(body || '{}');
+          let rank = 1;
           if (s.board) {
-            (scores[s.board] = scores[s.board] || []).push({ n: s.name || 'YOU', v: s.value || 0, d: Date.now() });
+            const en = { n: s.name || 'YOU', v: s.value || 0, d: Date.now() };
+            (scores[s.board] = scores[s.board] || []).push(en);
+            const top = sortedTop(s.board);
+            scores[s.board] = top;
+            rank = Math.max(1, top.indexOf(en) + 1);
+            if (asc(s.board) && top[0] === en) {
+              const kind = s.board.indexOf('mate:') === 0 ? 'mate' : 'fast';
+              replays[s.board] = {
+                n: en.n, opp: s.opp || '', san: s.san || '',
+                moves: kind === 'mate' ? s.value : Math.max(1, Math.ceil((s.plies | 0) / 2)),
+                ms: kind === 'fast' ? s.value : s.ms | 0,
+                board: s.board, d: Date.now(),
+              };
+            }
           }
-          res.end(JSON.stringify({ ok: true, rank: 1 }));
+          res.end(JSON.stringify({ ok: true, rank }));
         } catch (e) {
           res.end(JSON.stringify({ ok: false, err: 'invalid json' }));
         }

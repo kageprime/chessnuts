@@ -91,7 +91,15 @@ async function ladderTop(board, n) {
 async function handler(req, res) {
   try {
     if (req.method === 'GET') {
-      const q = req.query || {}, board = String(q.board || '');
+      const q = req.query || {}, board = String(q.board || ''), rep = String(q.replay || '');
+      if (rep) {
+        const RB = BOARDS[rep];
+        if (!RB || RB.kind === 'ladder') return res.status(400).json({ ok: false, err: 'bad replay board' });
+        const d = await kv('get/pc:replay:' + encodeURIComponent(rep));
+        let rp = null;
+        try { rp = typeof d.result === 'string' ? JSON.parse(d.result) : null; } catch (e) { /* corrupt replay */ }
+        return res.status(200).json({ ok: true, replay: rp });
+      }
       const B = BOARDS[board];
       if (!B) return res.status(400).json({ ok: false, err: 'bad board' });
       if (B.kind === 'ladder') {
@@ -119,7 +127,13 @@ async function handler(req, res) {
         try { const m = JSON.parse(arr[i]); top.push({ n: m.n, v: m.v, d: m.d }); }
         catch (e) { /* skip corrupt members */ }
       }
-      return res.status(200).json({ ok: true, board, top });
+      const body = { ok: true, board, top };
+      try {
+        const gd = await kv('get/pc:replay:' + encodeURIComponent(board));
+        const gp = typeof gd.result === 'string' ? JSON.parse(gd.result) : null;
+        if (gp) body.ghost = { n: gp.n, moves: gp.moves, ms: gp.ms };
+      } catch (e) { /* no ghost yet */ }
+      return res.status(200).json(body);
     }
     if (req.method === 'POST') {
       const s = req.body || {};
@@ -145,6 +159,16 @@ async function handler(req, res) {
       await kv('zadd/' + encodeURIComponent(key(s.board)) + '/' + score + '/' + encodeURIComponent(member), { method: 'POST' });
       await kv('zremrangebyrank/' + encodeURIComponent(key(s.board)) + '/0/-6', { method: 'POST' });
       const rk = await kv('zrevrank/' + encodeURIComponent(key(s.board)) + '/' + encodeURIComponent(member));
+      if ((rk.result | 0) === 0) {
+        const kind = BOARDS[s.board].kind;
+        const rep = JSON.stringify({
+          n: s.name, opp: s.opp || '', san: s.san,
+          moves: kind === 'mate' ? s.value : Math.max(1, Math.ceil((s.plies | 0) / 2)),
+          ms: kind === 'fast' ? s.value : s.ms | 0,
+          board: s.board, cc: countryOf(req), d: Date.now(),
+        });
+        await kv('set/pc:replay:' + encodeURIComponent(s.board) + '/' + encodeURIComponent(rep), { method: 'POST' });
+      }
       return res.status(200).json({ ok: true, rank: (rk.result | 0) + 1 });
     }
     return res.status(405).json({ ok: false, err: 'method' });

@@ -64,6 +64,17 @@ const http = require('http');
   const e3 = JSON.parse((await req('/api/elo?pid=aa11aa11')).body);
   ok('elo get returns rating and board', e3.ok === true && e3.elo === 1016 && e3.rank === 1 && e3.top.length === 1 && e3.top[0].me === true, JSON.stringify(e3));
 
+  // world scores with ghost replays
+  const sc1 = JSON.parse((await req('/api/scores', 'POST', { board: 'mate:moss', name: 'KAI', value: 5, plies: 11, ms: 40000, opp: 'moss', san: 'e4 e5 Qh5 Nc6 Bc4 Nf6 Qxf7#' })).body);
+  ok('scores post accepts the record', sc1.ok === true && sc1.rank === 1, JSON.stringify(sc1));
+  const sc2 = JSON.parse((await req('/api/scores?board=mate:moss')).body);
+  ok('board fetch advertises the ghost', sc2.ghost && sc2.ghost.n === 'KAI' && sc2.ghost.moves === 5, JSON.stringify(sc2));
+  const sc3 = JSON.parse((await req('/api/scores?replay=mate:moss')).body);
+  ok('replay fetch returns the stored line', sc3.ok === true && sc3.replay.san.includes('Qxf7#'), JSON.stringify(sc3));
+  const sc4 = JSON.parse((await req('/api/scores', 'POST', { board: 'mate:moss', name: 'RIVAL', value: 9, plies: 19, ms: 20000, opp: 'moss', san: 'd4 d5 c4 e6' })).body);
+  const sc5 = JSON.parse((await req('/api/scores?replay=mate:moss')).body);
+  ok('a slower mate keeps the record line', sc4.rank === 2 && sc5.replay.n === 'KAI', JSON.stringify(sc5));
+
   srv.close();
   console.log(fails ? fails + ' FAILED' : 'all server tests passed');
   process.exit(fails ? 1 : 0);

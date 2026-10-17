@@ -21,8 +21,8 @@ on, so implementation details stay grounded in what exists. Tag meanings: **(S)*
 - World leaderboards (fast/mate/streak/ladder/region) on Upstash REST via `api/scores.js`
 - Themes (4 boards + 3 pieces), 12 trophies, XP + ranks, HD vector artwork toggle
 - PWA: `sw.js` precaches the shell, offline fully playable, Vercel-deployed
-- 16 test suites in `npm test` (engine, API, P2P, server, matchmaking, SW, smoke, commentary, commentator,
-  puzzle, blitz, trainer, startmenu, ladder, themes, layout)
+- 17 test suites in `npm test` (engine, API, P2P, server, matchmaking, SW, smoke, commentary, commentator,
+  puzzle, blitz, trainer, ghost, startmenu, ladder, themes, layout)
 
 ## Principles (keep these true)
 
@@ -65,10 +65,16 @@ The room-code flow is the weakest link. Everything here reuses the existing sign
 
 ## Phase 2 — Single-player depth
 
-- [ ] **(L)** Ghost replays — clients already send full SAN on score submit, but `api/scores.js`
+- [x] **(L)** Ghost replays — clients already send full SAN on score submit, but `api/scores.js`
       validates and **discards** it. Persist the record-holder's game (`pc:replay:<board>`), and add
       "RACE THE GHOST": replay their moves on a shadow overlay while you play the same position line.
       Reuses review-mode stepping UI.
+      Shipped: a top-rank fast/mate submit stores `pc:replay:<board>` (name, SAN, moves, ms); board
+      GETs advertise `ghost` meta and the stats screen grows a RACE button per record. The race is a
+      normal ladder game vs that opponent with the ghost's white moves parsed back onto the board as
+      a faint arrow + shadow piece each turn; deviating or hitting an illegal ghost move (opponent
+      played differently) drops the overlay with a bubble note. Beat the ghost's moves/time and the
+      over screen says so — and the record submit may crown you as the next ghost.
 - [x] **(M)** Mistake Trainer — from your last N games (review data exists), auto-generate 5-position
       drills from your worst eval swings; score them like puzzles; feed the daily XP loop.
       Shipped: replays up to 8 recent `prof.games` (SAN), flags white moves the opponent's best reply
