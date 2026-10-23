@@ -164,7 +164,7 @@ const srv = http.createServer((req, res) => {
         const b = JSON.parse(body || '{}');
         if (!/^[0-9a-f]{8}$/.test(b.pid || '')) { res.end(JSON.stringify({ ok: false, err: 'bad pid' })); return; }
         const xp = Number.isInteger(b.xp) && b.xp >= 0 ? b.xp : 0;
-        const blitz = [0, 3, 5].includes(b.blitz) ? b.blitz : 0;
+        const blitz = [0, 1, 3, 5, 10, 30, 50, 32, 53].includes(b.blitz) ? b.blitz : 0;
         const name = String(b.name || 'YOU').replace(/[^A-Za-z0-9 _-]/g, '').slice(0, 12) || 'YOU';
         const tick = pawned[b.pid];
         if (tick) {
@@ -248,7 +248,7 @@ const srv = http.createServer((req, res) => {
   // API: TURN credentials (LAN play needs no relay; mirror the Vercel STUN fallback)
   if (u.pathname === '/api/turn') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ ok: true, fallback: true, iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] }));
+    res.end(JSON.stringify({ ok: true, fallback: true, iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] })); return; } if (u.pathname === '/api/og' || u.pathname === '/api/share') { const fn = require(u.pathname === '/api/og' ? './api/og.js' : './api/share.js'); const query = Object.fromEntries(u.searchParams.entries()); const hdrs = {}; let code = 200; const mockRes = { setHeader: (k, v) => { hdrs[k] = v; }, status: c => { code = c; return mockRes; }, json: o => { hdrs['Content-Type'] = 'application/json'; res.writeHead(code, hdrs); res.end(JSON.stringify(o)); }, send: b => { res.writeHead(code, hdrs); res.end(b); } }; fn({ method: req.method, query, headers: req.headers }, mockRes);
     return;
   }
 

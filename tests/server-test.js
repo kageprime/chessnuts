@@ -75,6 +75,12 @@ const http = require('http');
   const sc5 = JSON.parse((await req('/api/scores?replay=mate:moss')).body);
   ok('a slower mate keeps the record line', sc4.rank === 2 && sc5.replay.n === 'KAI', JSON.stringify(sc5));
 
+  // OG card & share landing page
+  const ogRes = await req('/api/og?room=ABCD');
+  ok('server serves /api/og PNG', ogRes.status === 200 && ogRes.headers['content-type'] === 'image/png' && ogRes.body.length > 500);
+  const shRes = await req('/api/share?room=ABCD');
+  ok('server serves /api/share HTML with og:image', shRes.status === 200 && shRes.body.includes('/api/og?room=ABCD') && shRes.body.includes('/chess/index.html?room=ABCD'));
+
   srv.close();
   console.log(fails ? fails + ' FAILED' : 'all server tests passed');
   process.exit(fails ? 1 : 0);

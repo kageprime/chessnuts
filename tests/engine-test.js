@@ -2,7 +2,7 @@
 const fs = require('fs');
 const html = fs.readFileSync(__dirname + '/../chess/index.html', 'utf8');
 const code = html.split('/*ENG*/')[1].split('/*ENGEND*/')[0];
-const E = new Function(code + ';return{newBoard,apply,legal,all,inCheck,toSAN,pick,atk,threats,ev,gen,V}')();
+const E = new Function(code + ';return{newBoard,apply,legal,all,inCheck,toSAN,pick,atk,threats,ev,gen,V,toFEN,uciToMove,toPGN}')();
 let fail = 0;
 const eq = (name, got, want) => { const ok = JSON.stringify(got) === JSON.stringify(want); if (!ok) fail++; console.log((ok ? 'ok   ' : 'FAIL ') + name + (ok ? '' : '  got ' + JSON.stringify(got) + ' want ' + JSON.stringify(want))); };
 
@@ -94,7 +94,7 @@ for (const [id, M] of Object.entries(MU.MUS)) {
 }
 
 // --- daily puzzles: every entry is a genuine mate-in-1 with no king captures ---
-const ZB = new Function('const BUS={on(){}};' + html.split('/*PUZ*/')[1].split('/*PUZEND*/')[0] + ';return{PUZ,fenParse,recordPuzzle,puzIdx,puzStamp,puzTrim,puzArchiveView}')();
+const ZB = new Function(code + html.split('/*TRN*/')[1].split('/*TRNEND*/')[0] + ';const BUS={on(){}};' + html.split('/*PUZ*/')[1].split('/*PUZEND*/')[0] + ';return{PUZ,PUZ_T2,PUZ_T3,fenParse,parseLichessDaily,recordPuzzle,puzIdx,puzStamp,puzTrim,puzArchiveView}')();
 eq('puzzles: 27 entries', ZB.PUZ.length, 27);
 {
   const bad = [];
@@ -191,7 +191,7 @@ eq('clock pads seconds', BZ.fmtClock(65000), '1:05');
 eq('clock clamps at zero', BZ.fmtClock(-200), '0:00');
 
 // --- review: blunder marks from eval swing (pawns, mover's view) ---
-const RV = new Function(html.split('/*REV*/')[1].split('/*REVEND*/')[0] + ';return{blunMark}')();
+const RV = new Function(html.split('/*REV*/')[1].split('/*REVEND*/')[0] + ';return{blunMark,histUci,formatMastersBook,pieceCount,formatTablebase}')();
 eq('review: quiet move unmarked', RV.blunMark(0.4), '');
 eq('review: ?! at 2.5', RV.blunMark(2.5), '?!');
 eq('review: ?? at 6', RV.blunMark(9), '??');
@@ -245,7 +245,7 @@ eq('kings never tremble', T('4k3/8/8/8/8/8/4q3/4K3 w - -').includes('7,4'), fals
 // --- profile / ladder rules ---
 // OPPS lives outside the PROF block (it's the campaign cast); endOpp needs it, so the sandbox gets a stub
 const OPPSTUB = [{ name: 'MOSSBACK', tag: 'THE CHEERFUL GARDENER', lv: 'EASY', lvl: 0, p: { bl: .14, a: 0, c: 0 } }, { name: 'LADY VEX', tag: 'SASSY, SNEAKY, SHARP', lv: 'NORMAL', lvl: 1, p: { bl: .02, a: 1.2, c: 0 } }, { name: 'OLD DUNE', tag: 'THE CALM DESERT SAGE', lv: 'HARD', lvl: 2, p: { bl: 0, a: 0, c: 1 } }, { name: 'NOX', tag: 'THE VOID BETWEEN STARS', lv: 'SECRET', lvl: 2, p: { bl: 0, a: 1, c: 1 } }];
-const P = new Function('OPPS', html.split('/*PROF*/')[1].split('/*PROFEND*/')[0] + ';return{loadProfile,saveProfile,recordResult,newProfile,isUnlocked,PKEY,themeUnlocked,setTheme,streakBoard,MIN_FAST,THEME_REQ,xpTitle,mkInitials,finUnlocked,setFin,finKeys,FIN_REQ,romanNum,EID,endOpp,oppById,eloOf,bossOf,curFloor,towerOf,towerBaseFloor,towerBaseTier,oppFloor}')(OPPSTUB);
+const P = new Function('OPPS', html.split('/*PROF*/')[1].split('/*PROFEND*/')[0] + ';return{loadProfile,saveProfile,recordResult,newProfile,isUnlocked,PKEY,themeUnlocked,setTheme,streakBoard,MIN_FAST,THEME_REQ,xpTitle,mkInitials,finUnlocked,setFin,finKeys,FIN_REQ,romanNum,EID,endOpp,oppById,eloOf,bossOf,curFloor,towerOf,towerBaseFloor,towerBaseTier,oppFloor,OPENINGS,matchOpenings,bestOpening,PACTS,pactForFloor}')(OPPSTUB);
 const mem = () => { const d = {}; return { getItem: k => (k in d ? d[k] : null), setItem: (k, v) => { d[k] = String(v); }, d }; };
 const R = (id, res, o = {}) => Object.assign({ id, res, mate: res !== 'd', plies: 41, ms: 90000, caps: 3, left: 9, undos: 0, san: 'e4', date: 1 }, o);
 {
@@ -523,5 +523,79 @@ const R = (id, res, o = {}) => Object.assign({ id, res, mate: res !== 'd', plies
   eq('old save: Midnight is unlocked by the old win record', P.themeUnlocked(m, 'board', 'midnight'), true);
 }
 
+// --- Section 1, 2, 3 expansion tests ---
+{
+  // toFEN, uciToMove, toPGN
+  const bStart = E.newBoard();
+  eq('toFEN start position', E.toFEN(bStart, 'w', 0), 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
+  const mvE4 = E.uciToMove(bStart, 'e2e4');
+  eq('uciToMove e2e4 legal', mvE4, [6, 4, 4, 4, 'Q']);
+  eq('uciToMove illegal move rejected', E.uciToMove(bStart, 'e2e5'), null);
+  const bAfterE4 = E.apply(bStart, mvE4[0], mvE4[1], mvE4[2], mvE4[3], mvE4[4]);
+  eq('toFEN after e4 records ep square e3', E.toFEN(bAfterE4, 'b', 1), 'rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1');
+  const pgn = E.toPGN([{ san: 'e4' }, { san: 'e5' }, { san: 'Nf3' }], { event: 'Tower', white: 'YOU', black: 'MOSS', result: '1-0', date: '2026.10.23' });
+  eq('toPGN formats headers and moves', pgn.includes('[Event "Tower"]') && pgn.includes('1. e4 e5 2. Nf3 1-0'), true);
+
+  // PUZ_T2 and PUZ_T3 multi-ply legality and mate verification
+  const badMulti = [];
+  ZB.PUZ_T2.concat(ZB.PUZ_T3).forEach((po, idx) => {
+    let [pb, col] = ZB.fenParse(po.fen);
+    for (let s = 0; s < po.line.length; s++) {
+      const m = E.uciToMove(pb, po.line[s]);
+      if (!m) { badMulti.push(idx + ':' + po.line[s]); break; }
+      pb = E.apply(pb, m[0], m[1], m[2], m[3], m[4]);
+      col = col === 'w' ? 'b' : 'w';
+    }
+    if (!(E.inCheck(pb, col) && E.all(pb, col).length === 0)) badMulti.push(idx + ':not-mate');
+  });
+  eq('PUZ_T2 and PUZ_T3 lines are 100% legal and end in checkmate', badMulti, []);
+
+  // parseLichessDaily
+  const parsedDaily = ZB.parseLichessDaily({
+    game: { pgn: '1. e4 e5 2. Bc4 Nc6' },
+    puzzle: { id: 'abcde', rating: 1650, initialPly: 3, solution: ['d1h5', 'g8f6', 'h5f7'], themes: ['mateIn2'] }
+  });
+  eq('parseLichessDaily parses PGN and solution', [parsedDaily.id, parsedDaily.rating, parsedDaily.side, parsedDaily.line.length], ['abcde', 1650, 'w', 3]);
+
+  // Lichess Masters Book & Syzygy Tablebase formatters
+  const hUci = RV.histUci([{ mv: [6, 4, 4, 4] }, { mv: [1, 4, 3, 4] }], 2);
+  eq('histUci formats comma-separated UCI list', hUci, 'e2e4,e7e5');
+  const mb = RV.formatMastersBook({
+    white: 40, draws: 35, black: 25,
+    opening: { eco: 'C20', name: 'King Pawn Game' },
+    moves: [{ san: 'Nf3', uci: 'g1f3', white: 30, draws: 20, black: 10 }]
+  });
+  eq('formatMastersBook computes percentages and lines', [mb.total, mb.wPct, mb.opening, mb.lines.length], [100, 40, '[C20] KING PAWN GAME', 1]);
+  const tb = RV.formatTablebase({
+    category: 'win', dtm: 5,
+    moves: [{ san: 'Qe7#', uci: 'e3e7', category: 'loss', dtm: -4 }]
+  });
+  eq('formatTablebase formats verdict and best move', [tb.verdict, tb.bestSan, tb.summary.includes('DTM 5')], ['WINNING', 'Qe7#', true]);
+  eq('pieceCount counts pieces on start board', RV.pieceCount(bStart), 32);
+
+  // Book of Openings & Tower Pacts
+  eq('OPENINGS has 41 entries', P.OPENINGS.length, 41);
+  const matched = P.matchOpenings('e4 e5 Nf3 Nc6 Bb5 a6');
+  eq('matchOpenings finds all prefix openings', matched.map(o => o.eco), ['B00', 'C20', 'C40', 'C60', 'C68']);
+  eq('bestOpening picks deepest match', P.bestOpening('e4 e5 Nf3 Nc6 Bb5 a6').n, 'RUY LOPEZ: MORPHY');
+
+  const pBook = P.newProfile();
+  const outOp = P.recordResult(pBook, R('moss', 'w', { san: 'e4 e5 Nf3 Nc6 Bc4' }));
+  eq('recordResult discovers new openings into prof.book', [outOp.openings.includes('ITALIAN GAME'), pBook.book['e4 e5 Nf3 Nc6 Bc4'].seen, pBook.book['e4 e5 Nf3 Nc6 Bc4'].w], [true, 1, 1]);
+
+  const stBook = mem();
+  stBook.d[P.PKEY] = JSON.stringify({
+    v: 1, aq: 1, side: 'b',
+    games: [{ id: 'moss', res: 'w', plies: 10, ms: 5000, san: 'd4 d5 c4' }]
+  });
+  const loadedBook = P.loadProfile(stBook);
+  eq('loadProfile backfills book from games and restores aq/side', [loadedBook.aq, loadedBook.side, loadedBook.book['d4 d5 c4'].w], [1, 'b', 1]);
+
+  eq('pactForFloor null on campaign floors 1-4', [P.pactForFloor(1), P.pactForFloor(4)], [null, null]);
+  eq('pactForFloor cycles PACTS on floors 5+', [P.pactForFloor(5).id, P.pactForFloor(6).id, P.pactForFloor(7).id], ['noundo', 'speed', 'oddsknight']);
+  const pPact = P.newProfile(); pPact.lv = 2; pPact.end = 3;
+  const outPact = P.recordResult(pPact, R('e3', 'w', { pact: 'oddsknight' }));
+  eq('recordResult awards bonus XP and restores 1 life on oddsknight pact win', [outPact.pact, pPact.xp, pPact.lv], ['oddsknight', 200, 3]);
+}
 console.log(fail ? `\n${fail} FAILED` : '\nall passed');
 process.exit(fail ? 1 : 0);

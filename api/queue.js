@@ -3,7 +3,7 @@
 // once a nearby-XP player is waiting, else {waiting}. The paired clients then run the
 // normal offer/answer flow through /api/signal - this endpoint only seats the table.
 const QUEUE = 'pc:queue';
-const BLITZ = [0, 3, 5];
+const BLITZ = [0, 1, 3, 5, 10, 30, 50, 32, 53];
 const XPRANGE = 400;
 const STALE = 90000;
 const ROOMS = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';

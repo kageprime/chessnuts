@@ -80,9 +80,11 @@ const join = (body, headers = {}) => { const r = res(); return q({ method: 'POST
 
   // ---- blitz partition ----
   reset();
-  await join({ pid: 'cc33cc33', name: 'C', xp: 500, blitz: 5 });
+  await join({ pid: 'cc33cc33', name: 'C', xp: 500, blitz: 32 });
   const d = await join({ pid: 'dd44dd44', name: 'D', xp: 500, blitz: 0 });
   eq('blitz mismatch does not pair', d.body.waiting, true);
+  const d2 = await join({ pid: 'ee44ee44', name: 'D2', xp: 500, blitz: 32 });
+  eq('matching 3+2 blitz code pairs', [d2.body.paired, d2.body.opp.n], [true, 'C']);
 
   // ---- xp window ----
   reset();
